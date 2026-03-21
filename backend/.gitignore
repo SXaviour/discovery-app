@@ -1,0 +1,5 @@
+// This .gitignore file is used to specify files and directories that should be ignored by Git when committing changes to the repository.
+node_modules/
+.env
+.DS_Store
+*.log

@@ -1,0 +1,215 @@
+const bcrypt = require('bcrypt');
+const { findUserByEmail, findUserById, createUser, updateUserLastLogin, emailExists } = require('../database/helpers');
+
+
+// ─── REGISTER ────────────────────────────────────────────────────────────────
+// Creates a new user account
+// POST /api/auth/register
+// Body: { email, password, username }
+
+async function register(req, res) {
+  try {
+    const { email, password, username } = req.body;
+
+    // 1. Make sure email and password were actually sent
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and password are required'
+      });
+    }
+
+    // 2. Basic email format check (must contain @ and a dot after it)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format'
+      });
+    }
+
+    // 3. Password must be at least 6 characters
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 6 characters'
+      });
+    }
+
+    // 4. Check if email is already taken
+    const alreadyExists = await emailExists(email);
+    if (alreadyExists) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email already registered'
+      });
+    }
+
+    // 5. Hash the password (bcrypt adds a random "salt" automatically)
+    //    saltRounds=10 means it runs 2^10 = 1024 hashing rounds — slow enough to be secure
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // 6. Save the new user to the database
+    const newUser = await createUser(email, passwordHash, username || null);
+
+    // 7. Respond with the new user's info (never send the password hash back!)
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        username: newUser.username,
+        created_at: newUser.created_at
+      }
+    });
+
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error during registration'
+    });
+  }
+}
+
+
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
+// Checks credentials and starts a session
+// POST /api/auth/login
+// Body: { email, password }
+
+async function login(req, res) {
+  try {
+    const { email, password } = req.body;
+
+    // 1. Require both fields
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and password are required'
+      });
+    }
+
+    // 2. Look up the user by email
+    const user = await findUserByEmail(email);
+
+    // 3. If no user found, return a vague error (don't reveal which field is wrong)
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid email or password'
+      });
+    }
+
+    // 4. Compare the submitted password against the stored hash
+    //    bcrypt.compare returns true/false
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    if (!passwordMatch) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid email or password'
+      });
+    }
+
+    // 5. Record the login time
+    await updateUserLastLogin(user.id);
+
+    // 6. Store the user's ID in their session
+    //    req.session is provided by express-session middleware
+    //    This session is stored server-side; the client only gets a cookie with a session ID
+    req.session.userId = user.id;
+
+    res.json({
+      success: true,
+      message: 'Logged in successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username
+      }
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error during login'
+    });
+  }
+}
+
+
+// ─── LOGOUT ───────────────────────────────────────────────────────────────────
+// Destroys the session and clears the cookie
+// POST /api/auth/logout
+
+async function logout(req, res) {
+  // req.session.destroy() removes the session data from the server
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Logout error:', err);
+      return res.status(500).json({
+        success: false,
+        error: 'Could not log out, please try again'
+      });
+    }
+
+    // Also clear the session cookie from the browser
+    res.clearCookie('connect.sid');
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  });
+}
+
+
+// ─── GET ME ───────────────────────────────────────────────────────────────────
+// Returns the currently logged-in user's info
+// GET /api/auth/me
+
+async function getMe(req, res) {
+  try {
+    // Check if a session exists with a userId
+    if (!req.session.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Not authenticated. Please log in.'
+      });
+    }
+
+    // Fetch fresh user data from the database using the session's userId
+    const user = await findUserById(req.session.userId);
+
+    if (!user) {
+      // Session exists but user was deleted from DB — clear the broken session
+      req.session.destroy(() => {});
+      return res.status(401).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        created_at: user.created_at
+      }
+    });
+
+  } catch (error) {
+    console.error('GetMe error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
+  }
+}
+
+
+module.exports = { register, login, logout, getMe };
