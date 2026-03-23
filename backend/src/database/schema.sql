@@ -13,28 +13,71 @@ CREATE TABLE users (
 -- Index for faster email lookups used during login and registration
 CREATE INDEX idx_users_email ON users(email);
 
--- PLACES TABLE
 CREATE TABLE places (
+  -- Primary key
   id SERIAL PRIMARY KEY,
+  
+  -- Essential identifiers
+  google_place_id VARCHAR(255) UNIQUE,
   name VARCHAR(255) NOT NULL,
+  
+  -- categorization
   city VARCHAR(100) NOT NULL,
   category VARCHAR(50) NOT NULL,
   subcategory VARCHAR(50),
-  price_level INTEGER CHECK (price_level >= 1 AND price_level <= 4),
+  
+  -- Location
+  address TEXT,
   latitude DECIMAL(10, 8),
   longitude DECIMAL(11, 8),
-  address TEXT,
-  description TEXT,
+  
+  -- Contact
+  phone VARCHAR(50),
+  website TEXT,
+  google_maps_url TEXT,
+  
+  -- Google ratings
+  google_rating DECIMAL(3, 2),
+  google_review_count INTEGER DEFAULT 0,
+  
+  -- my own ratings (for recommendation system)
   average_rating DECIMAL(3, 2) DEFAULT 0,
   total_ratings INTEGER DEFAULT 0,
+  
+  -- Pricing
+  price_level INTEGER CHECK (price_level >= 1 AND price_level <= 4),
+  
+  -- Media 
+  photo_reference TEXT,
   image_url TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  photos TEXT[],
+  
+  -- Business hours
+  hours JSONB,
+  open_now BOOLEAN,
+  
+  -- Description
+  description TEXT,
+  
+  -- Status
+  is_closed BOOLEAN DEFAULT false,
+  
+  -- Metadata
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  -- Constraints
+  CONSTRAINT unique_name_city UNIQUE (name, city)
 );
 
--- Indexes for faster queries
+-- Indexes
 CREATE INDEX idx_places_city ON places(city);
 CREATE INDEX idx_places_category ON places(category);
-CREATE INDEX idx_places_rating ON places(average_rating DESC);
+CREATE INDEX idx_places_google_rating ON places(google_rating DESC);
+CREATE INDEX idx_places_average_rating ON places(average_rating DESC);
+CREATE INDEX idx_places_location ON places(latitude, longitude);
+CREATE INDEX idx_places_google_place_id ON places(google_place_id);
+CREATE INDEX idx_places_price ON places(price_level);
 
 
 -- USER INTERACTIONS TABLE (ratings, favorites, visited)
