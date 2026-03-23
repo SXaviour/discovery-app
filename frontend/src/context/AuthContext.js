@@ -1,14 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// Keeps track of who is logged in and makes that info available to every page in the app
+
+import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
+  // user = the logged-in user's info, or null if nobody is logged in
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // When the app first loads, check if the user is already logged in
-  // (their session might still be active from a previous visit)
+  // When the app first opens, check if the user already has an active session from a previous visit
   useEffect(() => {
     api.get('/auth/me')
       .then(response => setUser(response.data.user))
@@ -16,28 +18,26 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  // Login function
+  // Auth functions — called from the login, register, and logout pages
   const login = async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
     setUser(response.data.user);
     return response.data;
   };
 
-  // Register function
   const register = async (email, password, username) => {
     const response = await api.post('/auth/register', { email, password, username });
     setUser(response.data.user);
     return response.data;
   };
 
-  // Logout function
   const logout = async () => {
     await api.post('/auth/logout');
     setUser(null);
   };
 
-  // Don't render anything until we know whether the user is logged in or not
-  // This prevents pages from briefly showing the wrong content on load
+  // Don't show any page until we've finished checking the session
+  // This stops pages from briefly showing the wrong content on load
   if (loading) return null;
 
   return (
@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-// Shortcut so any page can just write: const { user } = useAuth()
+// Shortcut hook — lets any page access auth with: const { user } = useAuth()
 export function useAuth() {
   return useContext(AuthContext);
 }
