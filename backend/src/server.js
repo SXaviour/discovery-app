@@ -6,6 +6,7 @@ require('dotenv').config();
 const db = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const placesRoutes = require('./routes/placesRoutes');
+const interactionsRoutes = require('./routes/interactionsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,10 +45,11 @@ app.use(session({
 
 // ─── ROUTES ───────────────────────────────────────────────────────────────────
 
-// Mount all auth routes at /api/auth
+// Mount all auth routes at /api
 // So: POST /api/auth/register, POST /api/auth/login, etc.
 app.use('/api/auth', authRoutes);
 app.use('/api/places', placesRoutes);
+app.use('/api/interactions', interactionsRoutes);
 
 // Health check
 app.get('/', (_req, res) => {

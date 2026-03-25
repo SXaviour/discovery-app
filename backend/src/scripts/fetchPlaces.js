@@ -1,6 +1,6 @@
-// One-time script to pull places from Google and save them to the database
+// One time script to pull places from Google and save them to the database
 // Run with: node src/scripts/fetchPlaces.js
-// Safe to re-run — duplicate places are automatically skipped
+// Safe to re-run, duplicate places are automatically skipped
 
 require('dotenv').config();
 const db = require('../config/database');
@@ -93,7 +93,7 @@ function getSubcategory(types = []) {
   return null;
 }
 
-// Pause execution — needed between paginated requests (Google requires a short delay)
+// Pause execution which is needed between paginated requests (Google requires a short delay)
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -127,7 +127,7 @@ async function savePlace(place, city, category) {
   const photoRefs = place.photos?.map(p => p.name) || [];
   const imageUrl  = photoRef ? buildPhotoUrl(photoRef) : null;
 
-  // weekday_text gives human-readable hours like "Monday: 9:00 AM – 10:00 PM"
+  // weekday_text gives human readable hours like "Monday: 9:00 AM – 10:00 PM"
   // JSON.stringify is needed because the hours column is JSONB — pg won't auto-convert a JS array for it
   const hoursRaw = place.regularOpeningHours?.weekdayDescriptions || null;
   const hours = hoursRaw ? JSON.stringify(hoursRaw) : null;

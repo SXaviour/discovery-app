@@ -58,6 +58,9 @@ CREATE TABLE places (
   
   -- Description
   description TEXT,
+
+  -- Extra attributes for the recommendation system (good for groups, outdoor seating, serves food etc.)
+  attributes JSONB DEFAULT '{}',
   
   -- Status
   is_closed BOOLEAN DEFAULT false,

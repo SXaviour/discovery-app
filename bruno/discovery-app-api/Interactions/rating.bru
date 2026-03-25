@@ -1,0 +1,18 @@
+meta {
+  name: rating
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:5000/api/interactions/rate
+  body: json
+  auth: none
+}
+
+body:json {
+  { 
+    "placeId": 1,
+     "rating": 4
+      }
+}

@@ -3,7 +3,7 @@
 const { getPlaces, getPlaceById, getPlaceStats } = require('../database/placesHelpers');
 
 // GET /api/places
-// Returns a list of places — can be filtered by city, category, and price level via query params
+// Returns a list of places and can be filtered by city, category, and price level via query params
 // Example: /api/places?city=Dublin&category=restaurant&price_level=2&limit=20&offset=0
 async function listPlaces(req, res) {
   try {
