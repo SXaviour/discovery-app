@@ -10,6 +10,8 @@ const {
   toggleFavorite,
   toggleVisited,
   getMyInteractions,
+  getMyFavorites,
+  getMyVisited,
   getPlaceInteractions,
 } = require('../controllers/interactionsControllers');
 
@@ -21,6 +23,8 @@ router.delete('/rate/:placeId',      removeRating);
 router.post('/favorite/:placeId',    toggleFavorite);
 router.post('/visited/:placeId',     toggleVisited);
 router.get('/my',                    getMyInteractions);
+router.get('/my/favorites',          getMyFavorites);
+router.get('/my/visited',            getMyVisited);
 router.get('/place/:placeId',        getPlaceInteractions);
 
 module.exports = router;

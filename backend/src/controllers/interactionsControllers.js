@@ -5,6 +5,7 @@ const {
   deleteRating,
   toggleInteraction,
   getUserInteractions,
+  getUserInteractionsByType,
   getUserPlaceInteractions,
 } = require('../database/interactionsHelpers');
 
@@ -141,11 +142,35 @@ async function getPlaceInteractions(req, res) {
   }
 }
 
+// GET /api/interactions/my/favorites
+async function getMyFavorites(req, res) {
+  try {
+    const places = await getUserInteractionsByType(req.session.userId, 'favorite');
+    res.json({ success: true, count: places.length, places });
+  } catch (error) {
+    console.error('getMyFavorites error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch favorites' });
+  }
+}
+
+// GET /api/interactions/my/visited
+async function getMyVisited(req, res) {
+  try {
+    const places = await getUserInteractionsByType(req.session.userId, 'visited');
+    res.json({ success: true, count: places.length, places });
+  } catch (error) {
+    console.error('getMyVisited error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch visited places' });
+  }
+}
+
 module.exports = {
   ratePlace,
   removeRating,
   toggleFavorite,
   toggleVisited,
   getMyInteractions,
+  getMyFavorites,
+  getMyVisited,
   getPlaceInteractions,
 };

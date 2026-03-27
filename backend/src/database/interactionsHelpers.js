@@ -115,6 +115,21 @@ async function getUserInteractions(userId) {
   return result.rows;
 }
 
+// Get only favorites or only visited places for a user
+async function getUserInteractionsByType(userId, type) {
+  const result = await db.query(`
+    SELECT
+      ui.id, ui.interaction_type, ui.created_at,
+      p.id as place_id, p.name, p.city, p.category, p.subcategory,
+      p.address, p.image_url, p.average_rating, p.google_rating, p.price_level
+    FROM user_interactions ui
+    JOIN places p ON ui.place_id = p.id
+    WHERE ui.user_id = $1 AND ui.interaction_type = $2
+    ORDER BY ui.created_at DESC
+  `, [userId, type]);
+  return result.rows;
+}
+
 // Get all of a user's interactions with one specific place
 // Used by the frontend to know which buttons (favorite, visited, rating) to show as active
 async function getUserPlaceInteractions(userId, placeId) {
@@ -131,5 +146,6 @@ module.exports = {
   deleteRating,
   toggleInteraction,
   getUserInteractions,
+  getUserInteractionsByType,
   getUserPlaceInteractions,
 };
