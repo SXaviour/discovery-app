@@ -6,8 +6,9 @@ require('dotenv').config();
 const db = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const placesRoutes = require('./routes/placesRoutes');
-const interactionsRoutes = require('./routes/interactionsRoutes');
-const preferencesRoutes  = require('./routes/preferencesRoutes');
+const interactionsRoutes      = require('./routes/interactionsRoutes');
+const preferencesRoutes       = require('./routes/preferencesRoutes');
+const recommendationsRoutes   = require('./routes/recommendationsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -50,8 +51,9 @@ app.use(session({
 // So: POST /api/auth/register, POST /api/auth/login, etc.
 app.use('/api/auth', authRoutes);
 app.use('/api/places', placesRoutes);
-app.use('/api/interactions', interactionsRoutes);
-app.use('/api/preferences',  preferencesRoutes);
+app.use('/api/interactions',    interactionsRoutes);
+app.use('/api/preferences',    preferencesRoutes);
+app.use('/api/recommendations', recommendationsRoutes);
 
 // Health check
 app.get('/', (_req, res) => {
