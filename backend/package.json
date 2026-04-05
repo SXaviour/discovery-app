@@ -9,6 +9,7 @@
     "fetch-places": "node src/scripts/fetchPlaces.js",
     "enrich-descriptions": "node src/scripts/enrichDescriptions.js",
     "seed-interactions": "node src/scripts/seedInteractions.js",
+    "train": "node src/ml/train.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
