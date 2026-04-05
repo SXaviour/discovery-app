@@ -1,6 +1,5 @@
 // Builds a taste profile for a user based on everything they've interacted with
 // This profile is used by the recommendation system to decide what to suggest
-//
 // It looks at ratings, favorites, and visited places — then works out:
 //    Which categories this user tends to enjoy
 //    Which price levels they gravitate toward
@@ -11,7 +10,7 @@ const db = require('../config/database');
 
 // How much each interaction type is worth as a preference score (out of 5)
 const INTERACTION_SCORES = {
-  rating:   null,  // Use the actual rating value
+  rating:   null,  
   favorite: 4.0,
   visited:  3.0,
 };
