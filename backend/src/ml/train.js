@@ -1,7 +1,7 @@
 // NCF (Neural Collaborative Filtering) training script
 // Learns user and place taste patterns from the interaction dataset
 // Run with: npm run train
-//
+
 // What this does:
 //   1. Loads all interactions from the database
 //   2. Converts them to unified preference scores (ratings + favorites + visited)
@@ -17,11 +17,13 @@ const db   = require('../config/database');
 
 const MODELS_DIR    = path.join(__dirname, '../../models');
 const EMBEDDING_DIM = 32;   // How many numbers represent each user/place — higher = more expressive but slower
-const EPOCHS        = 20;   // How many full passes through the training data
+const EPOCHS        = 50;   // Max epochs — early stopping will likely cut this short
 const BATCH_SIZE    = 512;  // How many samples to process at once during training
 const LEARNING_RATE = 0.001;
+const DROPOUT_RATE  = 0.3;  // During training, randomly switch off 30% of neurons each pass to prevent memorisation
+const PATIENCE      = 5;    // Stop training if val_loss hasn't improved in this many epochs
 
-// ---------- STEP 1: LOAD INTERACTIONS ----------
+// STEP 1: LOAD INTERACTIONS
 
 async function loadInteractions() {
   const result = await db.query(`
@@ -31,7 +33,7 @@ async function loadInteractions() {
   return result.rows;
 }
 
-// ---------- STEP 2: CONVERT TO PREFERENCE SCORES ----------
+// STEP 2: CONVERT TO PREFERENCE SCORES
 // Combines all interaction types for the same user+place into one score
 // Same logic as the user profile system so everything is consistent
 
@@ -67,7 +69,7 @@ function toPreferenceScore(interactions) {
   return samples;
 }
 
-// ---------- STEP 3: BUILD ID MAPS ----------
+// STEP 3: BUILD ID MAPS
 // The model works with sequential indices (0, 1, 2...) not database IDs (which can have gaps)
 
 function buildMaps(samples) {
@@ -80,9 +82,9 @@ function buildMaps(samples) {
   return { userMap, placeMap, numUsers: userIds.length, numPlaces: placeIds.length };
 }
 
-// ---------- STEP 4: BUILD THE MODEL ----------
+// STEP 4: BUILD THE MODEL
 // NCF architecture: user embedding + place embedding → dense layers → predicted score
-//
+
 // An embedding is a row of learned numbers that represents a user or place
 // Two users with similar taste end up with similar embedding values
 // The model learns these embeddings by trying to predict scores accurately
@@ -100,12 +102,16 @@ function buildModel(numUsers, numPlaces) {
   const placeFlat = tf.layers.flatten().apply(placeEmbedding);
 
   // Concatenate user and place embeddings into one vector, then pass through dense layers
-  const concat = tf.layers.concatenate().apply([userFlat, placeFlat]);
-  const dense1 = tf.layers.dense({ units: 64, activation: 'relu' }).apply(concat);
-  const dense2 = tf.layers.dense({ units: 32, activation: 'relu' }).apply(dense1);
+  // Dropout layers randomly disable neurons during training — forces the model to spread
+  // its learning across more neurons instead of relying on a few, which prevents overfitting
+  const concat  = tf.layers.concatenate().apply([userFlat, placeFlat]);
+  const dense1  = tf.layers.dense({ units: 64, activation: 'relu' }).apply(concat);
+  const drop1   = tf.layers.dropout({ rate: DROPOUT_RATE }).apply(dense1);
+  const dense2  = tf.layers.dense({ units: 32, activation: 'relu' }).apply(drop1);
+  const drop2   = tf.layers.dropout({ rate: DROPOUT_RATE }).apply(dense2);
 
   // Final output: a single number between 0–1 (the predicted preference score)
-  const output = tf.layers.dense({ units: 1, activation: 'sigmoid', name: 'output' }).apply(dense2);
+  const output = tf.layers.dense({ units: 1, activation: 'sigmoid', name: 'output' }).apply(drop2);
 
   const model = tf.model({ inputs: [userInput, placeInput], outputs: output });
 
@@ -118,7 +124,7 @@ function buildModel(numUsers, numPlaces) {
   return model;
 }
 
-// ---------- STEP 5: PREPARE TENSORS ----------
+// STEP 5: PREPARE TENSORS 
 
 function prepareTensors(samples, userMap, placeMap) {
   const userIndices  = samples.map(s => userMap[s.user_id]);
@@ -132,7 +138,7 @@ function prepareTensors(samples, userMap, placeMap) {
   };
 }
 
-// ---------- STEP 6: TRAIN ----------
+// STEP 6: TRAIN 
 
 async function train() {
   console.log('Loading interactions from database...');
@@ -150,14 +156,44 @@ async function train() {
 
   const { userTensor, placeTensor, scoreTensor } = prepareTensors(samples, userMap, placeMap);
 
+  // Early stopping — tracks the best val_loss and stops training if it hasn't improved
+  // in PATIENCE epochs. Also saves metrics to a JSON file for graphing in the report
+  let bestValLoss   = Infinity;
+  let waitCount     = 0;
+  let bestEpoch     = 0;
+  const metricsLog  = [];
+  let stopTraining  = false;
+
   console.log('\nTraining...\n');
   await model.fit([userTensor, placeTensor], scoreTensor, {
     epochs:          EPOCHS,
     batchSize:       BATCH_SIZE,
-    validationSplit: 0.1, // Hold back 10% to check the model isn't just memorising the training data
+    validationSplit: 0.1,
     callbacks: {
-      onEpochEnd: (epoch, logs) => {
-        console.log(`  Epoch ${epoch + 1}/${EPOCHS} — loss: ${logs.loss.toFixed(4)}, val_loss: ${logs.val_loss.toFixed(4)}, mae: ${logs.mae.toFixed(4)}`);
+      onEpochEnd: async (epoch, logs) => {
+        const entry = {
+          epoch:    epoch + 1,
+          loss:     parseFloat(logs.loss.toFixed(6)),
+          val_loss: parseFloat(logs.val_loss.toFixed(6)),
+          mae:      parseFloat(logs.mae.toFixed(6)),
+        };
+        metricsLog.push(entry);
+
+        console.log(`  Epoch ${entry.epoch}/${EPOCHS} — loss: ${logs.loss.toFixed(4)}, val_loss: ${logs.val_loss.toFixed(4)}, mae: ${logs.mae.toFixed(4)}`);
+
+        // Check if val_loss improved
+        if (logs.val_loss < bestValLoss) {
+          bestValLoss = logs.val_loss;
+          bestEpoch   = epoch + 1;
+          waitCount   = 0;
+        } else {
+          waitCount++;
+          if (waitCount >= PATIENCE) {
+            console.log(`\n  Early stopping — val_loss hasn't improved since epoch ${bestEpoch} (best: ${bestValLoss.toFixed(4)})`);
+            stopTraining = true;
+            model.stopTraining = true;
+          }
+        }
       }
     }
   });
@@ -167,13 +203,31 @@ async function train() {
   placeTensor.dispose();
   scoreTensor.dispose();
 
-  // ---------- STEP 7: SAVE ----------
+  // STEP 7: SAVE
+  // tensorflow/tfjs (pure JS) has no built-in filesystem save handler — that's only in tfjs-node
+  // Instead we use a custom save handler that intercepts the model artifacts and writes them
+  // to disk manually using Node's fs module
 
   if (!fs.existsSync(MODELS_DIR)) fs.mkdirSync(MODELS_DIR, { recursive: true });
 
-  const modelPath = `file://${MODELS_DIR}/ncf_model`;
-  await model.save(modelPath);
-  console.log(`\nModel saved to ${MODELS_DIR}/ncf_model`);
+  const saveHandler = tf.io.withSaveHandler(async (artifacts) => {
+    fs.writeFileSync(
+      path.join(MODELS_DIR, 'model.json'),
+      JSON.stringify(artifacts.modelTopology)
+    );
+    fs.writeFileSync(
+      path.join(MODELS_DIR, 'weight_specs.json'),
+      JSON.stringify(artifacts.weightSpecs)
+    );
+    fs.writeFileSync(
+      path.join(MODELS_DIR, 'weights.bin'),
+      Buffer.from(artifacts.weightData)
+    );
+    return { modelArtifactsInfo: { dateSaved: new Date(), modelTopologyType: 'JSON' } };
+  });
+
+  await model.save(saveHandler);
+  console.log(`\nModel saved to ${MODELS_DIR}`);
 
   // Save the ID maps alongside the model so inference knows how to convert DB IDs to indices
   fs.writeFileSync(
@@ -182,7 +236,14 @@ async function train() {
   );
   console.log('ID maps saved to models/maps.json');
 
-  console.log('\nTraining complete.');
+  // Save training metrics so they can be graphed for the report
+  fs.writeFileSync(
+    path.join(MODELS_DIR, 'training_metrics.json'),
+    JSON.stringify(metricsLog, null, 2)
+  );
+  console.log('Training metrics saved to models/training_metrics.json');
+
+  console.log(`\nTraining complete. Best val_loss: ${bestValLoss.toFixed(4)} at epoch ${bestEpoch}`);
   await db.end();
 }
 
