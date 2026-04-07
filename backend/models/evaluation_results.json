@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-04-06T19:54:16.051Z",
+  "testSize": 8101,
+  "trainSize": 32033,
+  "rmse": 0.166138,
+  "rmseStars": 0.83,
+  "precisionAtK": {
+    "k": 10,
+    "value": 0.0711,
+    "usersEvaluated": 201
+  },
+  "coverage": {
+    "value": 0.0897,
+    "placesRecommended": 83,
+    "totalPlaces": 925
+  }
+}
