@@ -23,12 +23,14 @@ const BATCH_SIZE         = 512; // How many samples to process at once during tr
 const LEARNING_RATE      = 0.001;
 const DROPOUT_RATE       = 0.3; // During training, randomly switch off 30% of neurons each pass to prevent memorisation
 const PATIENCE           = 5;   // Stop training if val_loss hasn't improved in this many epochs
+const NEGATIVE_RATIO     = 4;   // For every real interaction, generate 4 "user never visited this" negatives
 
 // STEP 1: LOAD INTERACTIONS
 
 async function loadInteractions() {
   const result = await db.query(`
-    SELECT ui.user_id, ui.place_id, ui.interaction_type, ui.rating_value, p.category
+    SELECT ui.user_id, ui.place_id, ui.interaction_type, ui.rating_value,
+           p.category, p.subcategory
     FROM user_interactions ui
     JOIN places p ON ui.place_id = p.id
   `);
@@ -44,12 +46,12 @@ function toPreferenceScore(interactions) {
   const grouped = {};
   for (const row of interactions) {
     const key = `${row.user_id}_${row.place_id}`;
-    if (!grouped[key]) grouped[key] = { user_id: row.user_id, place_id: row.place_id, category: row.category, rows: [] };
+    if (!grouped[key]) grouped[key] = { user_id: row.user_id, place_id: row.place_id, category: row.category, subcategory: row.subcategory, rows: [] };
     grouped[key].rows.push(row);
   }
 
   const samples = [];
-  for (const { user_id, place_id, category, rows } of Object.values(grouped)) {
+  for (const { user_id, place_id, category, subcategory, rows } of Object.values(grouped)) {
     const hasRating   = rows.find(r => r.interaction_type === 'rating');
     const hasFavorite = rows.find(r => r.interaction_type === 'favorite');
     const hasVisited  = rows.find(r => r.interaction_type === 'visited');
@@ -65,25 +67,119 @@ function toPreferenceScore(interactions) {
     }
 
     // Normalize score to 0–1 range for the neural network
-    samples.push({ user_id: parseInt(user_id), place_id: parseInt(place_id), category, score: score / 5 });
+    // Uses (score - 1) / 4 so: 1 star = 0.0, 3 stars = 0.5, 5 stars = 1.0
+    // This spreads the range better than score/5 which wastes the 0–0.2 zone
+    samples.push({ user_id: parseInt(user_id), place_id: parseInt(place_id), category, subcategory, score: (score - 1) / 4 });
   }
 
   return samples;
+}
+
+// STEP 2B: GENERATE NEGATIVE SAMPLES
+// The model needs to see "this user would NOT enjoy this place" examples, not just positives
+// Without negatives, it predicts similar scores for everything and just defaults to popularity
+// For each user we pick random places they never interacted with and label them as 0.0
+
+function generateNegativeSamples(positiveSamples, placeLookup) {
+  // Build a fast lookup of all observed user-place pairs so we never use one as a negative
+  const seenPairs = new Set(positiveSamples.map(s => `${s.user_id}_${s.place_id}`));
+  const allPlaceIds = Object.keys(placeLookup).map(Number);
+
+  // Group places by category so we can pick hard negatives efficiently
+  const placesByCategory = {};
+  for (const [id, info] of Object.entries(placeLookup)) {
+    if (!placesByCategory[info.category]) placesByCategory[info.category] = [];
+    placesByCategory[info.category].push(Number(id));
+  }
+
+  // Group positives by user
+  const byUser = {};
+  for (const s of positiveSamples) {
+    if (!byUser[s.user_id]) byUser[s.user_id] = [];
+    byUser[s.user_id].push(s);
+  }
+
+  const negatives = [];
+
+  for (const [userId, userSamples] of Object.entries(byUser)) {
+    const needed     = userSamples.length * NEGATIVE_RATIO;
+    const hardNeeded = Math.floor(needed * 0.5); // 50% hard — from categories the user likes
+    const easyNeeded = needed - hardNeeded;       // 50% easy — fully random
+
+    // Work out which categories this user has interacted with
+    const userCategories = [...new Set(userSamples.map(s => s.category))];
+
+    // Hard negatives — same categories the user engages with
+    // Forces the model to learn WHICH places within a category the user prefers
+    let hardAdded = 0;
+    let hardAttempts = 0;
+    while (hardAdded < hardNeeded && hardAttempts < hardNeeded * 3) {
+      const cat  = userCategories[Math.floor(Math.random() * userCategories.length)];
+      const pool = placesByCategory[cat];
+      if (!pool || pool.length === 0) { hardAttempts++; continue; }
+
+      const placeId = pool[Math.floor(Math.random() * pool.length)];
+      hardAttempts++;
+
+      const key = `${userId}_${placeId}`;
+      if (seenPairs.has(key)) continue;
+      seenPairs.add(key);
+
+      negatives.push({
+        user_id:     parseInt(userId),
+        place_id:    placeId,
+        category:    placeLookup[placeId].category,
+        subcategory: placeLookup[placeId].subcategory,
+        score:       0.0,
+      });
+      hardAdded++;
+    }
+
+    // Easy negatives — random from anywhere
+    // Teaches the broad signal: "this user prefers X over Y category"
+    let easyAdded = 0;
+    let easyAttempts = 0;
+    while (easyAdded < easyNeeded && easyAttempts < easyNeeded * 3) {
+      const placeId = allPlaceIds[Math.floor(Math.random() * allPlaceIds.length)];
+      easyAttempts++;
+
+      const key = `${userId}_${placeId}`;
+      if (seenPairs.has(key)) continue;
+      seenPairs.add(key);
+
+      negatives.push({
+        user_id:     parseInt(userId),
+        place_id:    placeId,
+        category:    placeLookup[placeId].category,
+        subcategory: placeLookup[placeId].subcategory,
+        score:       0.0,
+      });
+      easyAdded++;
+    }
+  }
+
+  return negatives;
 }
 
 // STEP 3: BUILD ID MAPS
 // The model works with sequential indices (0, 1, 2...) not database IDs (which can have gaps)
 
 function buildMaps(samples) {
-  const userIds    = [...new Set(samples.map(s => s.user_id))].sort((a, b) => a - b);
-  const placeIds   = [...new Set(samples.map(s => s.place_id))].sort((a, b) => a - b);
-  const categories = [...new Set(samples.map(s => s.category))].sort();
+  const userIds       = [...new Set(samples.map(s => s.user_id))].sort((a, b) => a - b);
+  const placeIds      = [...new Set(samples.map(s => s.place_id))].sort((a, b) => a - b);
+  const categories    = [...new Set(samples.map(s => s.category))].sort();
+  const subcategories = [...new Set(samples.map(s => s.subcategory))].sort();
 
-  const userMap     = Object.fromEntries(userIds.map((id, i)    => [id, i]));
-  const placeMap    = Object.fromEntries(placeIds.map((id, i)   => [id, i]));
-  const categoryMap = Object.fromEntries(categories.map((c, i)  => [c, i]));
+  const userMap        = Object.fromEntries(userIds.map((id, i)       => [id, i]));
+  const placeMap       = Object.fromEntries(placeIds.map((id, i)      => [id, i]));
+  const categoryMap    = Object.fromEntries(categories.map((c, i)     => [c, i]));
+  const subcategoryMap = Object.fromEntries(subcategories.map((s, i)  => [s, i]));
 
-  return { userMap, placeMap, categoryMap, numUsers: userIds.length, numPlaces: placeIds.length, numCategories: categories.length };
+  return {
+    userMap, placeMap, categoryMap, subcategoryMap,
+    numUsers: userIds.length, numPlaces: placeIds.length,
+    numCategories: categories.length, numSubcategories: subcategories.length,
+  };
 }
 
 // STEP 4: BUILD THE MODEL
@@ -93,25 +189,28 @@ function buildMaps(samples) {
 // Two users with similar taste end up with similar embedding values
 // The model learns these embeddings by trying to predict scores accurately
 
-function buildModel(numUsers, numPlaces, numCategories) {
-  const userInput     = tf.input({ shape: [1], name: 'user_input' });
-  const placeInput    = tf.input({ shape: [1], name: 'place_input' });
-  const categoryInput = tf.input({ shape: [1], name: 'category_input' });
+function buildModel(numUsers, numPlaces, numCategories, numSubcategories) {
+  const userInput        = tf.input({ shape: [1], name: 'user_input' });
+  const placeInput       = tf.input({ shape: [1], name: 'place_input' });
+  const categoryInput    = tf.input({ shape: [1], name: 'category_input' });
+  const subcategoryInput = tf.input({ shape: [1], name: 'subcategory_input' });
 
   // Each user and place gets a vector of EMBEDDING_DIM numbers
-  // Category gets a smaller vector — only 7 categories, doesn't need as many dimensions
-  const userEmbedding     = tf.layers.embedding({ inputDim: numUsers,      outputDim: EMBEDDING_DIM,      name: 'user_embedding'     }).apply(userInput);
-  const placeEmbedding    = tf.layers.embedding({ inputDim: numPlaces,     outputDim: EMBEDDING_DIM,      name: 'place_embedding'    }).apply(placeInput);
-  const categoryEmbedding = tf.layers.embedding({ inputDim: numCategories, outputDim: CATEGORY_EMBED_DIM, name: 'category_embedding' }).apply(categoryInput);
+  // Category and subcategory get smaller vectors — fewer unique values
+  const userEmbedding        = tf.layers.embedding({ inputDim: numUsers,         outputDim: EMBEDDING_DIM,      name: 'user_embedding'        }).apply(userInput);
+  const placeEmbedding       = tf.layers.embedding({ inputDim: numPlaces,        outputDim: EMBEDDING_DIM,      name: 'place_embedding'       }).apply(placeInput);
+  const categoryEmbedding    = tf.layers.embedding({ inputDim: numCategories,    outputDim: CATEGORY_EMBED_DIM, name: 'category_embedding'    }).apply(categoryInput);
+  const subcategoryEmbedding = tf.layers.embedding({ inputDim: numSubcategories, outputDim: CATEGORY_EMBED_DIM, name: 'subcategory_embedding' }).apply(subcategoryInput);
 
-  // Flatten so we can combine them — user(32) + place(32) + category(8) = 72 dimensions
-  const userFlat     = tf.layers.flatten().apply(userEmbedding);
-  const placeFlat    = tf.layers.flatten().apply(placeEmbedding);
-  const categoryFlat = tf.layers.flatten().apply(categoryEmbedding);
+  // Flatten so we can combine them — user(32) + place(32) + category(8) + subcategory(8) = 80 dimensions
+  const userFlat        = tf.layers.flatten().apply(userEmbedding);
+  const placeFlat       = tf.layers.flatten().apply(placeEmbedding);
+  const categoryFlat    = tf.layers.flatten().apply(categoryEmbedding);
+  const subcategoryFlat = tf.layers.flatten().apply(subcategoryEmbedding);
 
-  // Concatenate all three embeddings, then pass through dense layers
+  // Concatenate all four embeddings, then pass through dense layers
   // Dropout layers randomly disable neurons during training to prevent overfitting
-  const concat  = tf.layers.concatenate().apply([userFlat, placeFlat, categoryFlat]);
+  const concat  = tf.layers.concatenate().apply([userFlat, placeFlat, categoryFlat, subcategoryFlat]);
   const dense1  = tf.layers.dense({ units: 64, activation: 'relu' }).apply(concat);
   const drop1   = tf.layers.dropout({ rate: DROPOUT_RATE }).apply(dense1);
   const dense2  = tf.layers.dense({ units: 32, activation: 'relu' }).apply(drop1);
@@ -120,8 +219,10 @@ function buildModel(numUsers, numPlaces, numCategories) {
   // Final output: a single number between 0–1 (the predicted preference score)
   const output = tf.layers.dense({ units: 1, activation: 'sigmoid', name: 'output' }).apply(drop2);
 
-  const model = tf.model({ inputs: [userInput, placeInput, categoryInput], outputs: output });
+  const model = tf.model({ inputs: [userInput, placeInput, categoryInput, subcategoryInput], outputs: output });
 
+  // MSE is the right choice here because our targets are continuous (0.0, 0.25, 0.5, 0.75, 1.0)
+  // not binary (0 or 1) — BCE would be a mismatch since it assumes probabilities
   model.compile({
     optimizer: tf.train.adam(LEARNING_RATE),
     loss: 'meanSquaredError',
@@ -133,17 +234,19 @@ function buildModel(numUsers, numPlaces, numCategories) {
 
 // STEP 5: PREPARE TENSORS
 
-function prepareTensors(samples, userMap, placeMap, categoryMap) {
-  const userIndices     = samples.map(s => userMap[s.user_id]);
-  const placeIndices    = samples.map(s => placeMap[s.place_id]);
-  const categoryIndices = samples.map(s => categoryMap[s.category]);
-  const scores          = samples.map(s => s.score);
+function prepareTensors(samples, userMap, placeMap, categoryMap, subcategoryMap) {
+  const userIndices        = samples.map(s => userMap[s.user_id]);
+  const placeIndices       = samples.map(s => placeMap[s.place_id]);
+  const categoryIndices    = samples.map(s => categoryMap[s.category]);
+  const subcategoryIndices = samples.map(s => subcategoryMap[s.subcategory]);
+  const scores             = samples.map(s => s.score);
 
   return {
-    userTensor:     tf.tensor2d(userIndices,     [samples.length, 1], 'int32'),
-    placeTensor:    tf.tensor2d(placeIndices,    [samples.length, 1], 'int32'),
-    categoryTensor: tf.tensor2d(categoryIndices, [samples.length, 1], 'int32'),
-    scoreTensor:    tf.tensor2d(scores,          [samples.length, 1], 'float32'),
+    userTensor:        tf.tensor2d(userIndices,        [samples.length, 1], 'int32'),
+    placeTensor:       tf.tensor2d(placeIndices,       [samples.length, 1], 'int32'),
+    categoryTensor:    tf.tensor2d(categoryIndices,    [samples.length, 1], 'int32'),
+    subcategoryTensor: tf.tensor2d(subcategoryIndices, [samples.length, 1], 'int32'),
+    scoreTensor:       tf.tensor2d(scores,             [samples.length, 1], 'float32'),
   };
 }
 
@@ -154,16 +257,36 @@ async function train() {
   const raw = await loadInteractions();
   console.log(`  ${raw.length} raw interaction rows loaded`);
 
-  const samples = toPreferenceScore(raw);
-  console.log(`  ${samples.length} unique user-place preference scores built\n`);
+  const positiveSamples = toPreferenceScore(raw);
+  console.log(`  ${positiveSamples.length} unique user-place preference scores built`);
 
-  const { userMap, placeMap, categoryMap, numUsers, numPlaces, numCategories } = buildMaps(samples);
-  console.log(`  ${numUsers} unique users, ${numPlaces} unique places, ${numCategories} categories\n`);
+  // Build a lookup for all places so negatives can have their category/subcategory set
+  const placeResult = await db.query('SELECT id, category, subcategory FROM places WHERE is_closed = false');
+  const placeLookup = {};
+  for (const row of placeResult.rows) {
+    placeLookup[row.id] = { category: row.category, subcategory: row.subcategory };
+  }
 
-  const model = buildModel(numUsers, numPlaces, numCategories);
+  // Generate negative samples — places each user never interacted with, scored 0.0
+  // This teaches the model what "not interested" looks like
+  const negativeSamples = generateNegativeSamples(positiveSamples, placeLookup);
+  console.log(`  ${negativeSamples.length} negative samples generated (${NEGATIVE_RATIO}x ratio)`);
+
+  // Combine and shuffle so the model doesn't see all positives then all negatives
+  const samples = [...positiveSamples, ...negativeSamples];
+  for (let i = samples.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [samples[i], samples[j]] = [samples[j], samples[i]];
+  }
+  console.log(`  ${samples.length} total training samples\n`);
+
+  const { userMap, placeMap, categoryMap, subcategoryMap, numUsers, numPlaces, numCategories, numSubcategories } = buildMaps(samples);
+  console.log(`  ${numUsers} users, ${numPlaces} places, ${numCategories} categories, ${numSubcategories} subcategories\n`);
+
+  const model = buildModel(numUsers, numPlaces, numCategories, numSubcategories);
   model.summary();
 
-  const { userTensor, placeTensor, categoryTensor, scoreTensor } = prepareTensors(samples, userMap, placeMap, categoryMap);
+  const { userTensor, placeTensor, categoryTensor, subcategoryTensor, scoreTensor } = prepareTensors(samples, userMap, placeMap, categoryMap, subcategoryMap);
 
   // Early stopping — tracks the best val_loss and stops training if it hasn't improved
   // in PATIENCE epochs. Also saves metrics to a JSON file for graphing in the report
@@ -173,7 +296,7 @@ async function train() {
   const metricsLog  = [];
 
   console.log('\nTraining...\n');
-  await model.fit([userTensor, placeTensor, categoryTensor], scoreTensor, {
+  await model.fit([userTensor, placeTensor, categoryTensor, subcategoryTensor], scoreTensor, {
     epochs:          EPOCHS,
     batchSize:       BATCH_SIZE,
     validationSplit: 0.1,
@@ -209,6 +332,7 @@ async function train() {
   userTensor.dispose();
   placeTensor.dispose();
   categoryTensor.dispose();
+  subcategoryTensor.dispose();
   scoreTensor.dispose();
 
   // STEP 7: SAVE
@@ -240,7 +364,7 @@ async function train() {
   // Save the ID maps alongside the model so inference knows how to convert DB IDs to indices
   fs.writeFileSync(
     path.join(MODELS_DIR, 'maps.json'),
-    JSON.stringify({ userMap, placeMap, categoryMap, numUsers, numPlaces, numCategories }, null, 2)
+    JSON.stringify({ userMap, placeMap, categoryMap, subcategoryMap, numUsers, numPlaces, numCategories, numSubcategories }, null, 2)
   );
   console.log('ID maps saved to models/maps.json');
 

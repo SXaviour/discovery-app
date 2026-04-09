@@ -146,9 +146,27 @@ function buildInteractions(profile, places) {
     ...pickN(homePlaces, scale(40)).map(p => ({ placeId: p.id, type: 'visited' }))
   );
 
-  // Noise — random ratings across all places, includes low ratings for negative signals
+  // Noise — some random ratings to simulate real-world messiness
+  // 70% of noise comes from the user's primary categories (more realistic — people
+  // mostly rate things they'd actually visit) and 30% is truly random across all places
+  const primaryCategories = {
+    'restaurant-heavy': ['restaurant'],
+    'museum-heavy':     ['museum', 'attraction'],
+    'bar-heavy':        ['bar', 'entertainment'],
+    'budget':           ['park', 'attraction'],
+    'luxury':           ['restaurant', 'shopping'],
+    'mixed':            ['restaurant', 'bar', 'museum'],
+  };
+  const primaryCats = primaryCategories[profile] || [];
+  const primaryPlaces = places.filter(p => primaryCats.includes(p.category));
+
+  const noiseCount = scale(10); // reduced from 30 — 10% noise instead of 30%
+  const primaryNoiseCount = Math.floor(noiseCount * 0.7);
+  const randomNoiseCount  = noiseCount - primaryNoiseCount;
+
   raw.push(
-    ...pickN(places, scale(30)).map(p => ({ placeId: p.id, type: 'rating', value: pick([1,2,3,4,5]) }))
+    ...pickN(primaryPlaces, primaryNoiseCount).map(p => ({ placeId: p.id, type: 'rating', value: pick([1,2,3,4,5]) })),
+    ...pickN(places, randomNoiseCount).map(p => ({ placeId: p.id, type: 'rating', value: pick([1,2,3,4,5]) }))
   );
 
   // Deduplicate — same user can't have the same interaction type for the same place twice

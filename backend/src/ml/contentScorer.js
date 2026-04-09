@@ -179,4 +179,47 @@ async function getContentBasedRecommendations(userId, { city, limit = 20 } = {})
   };
 }
 
-module.exports = { getContentBasedRecommendations };
+// Exposed separately so the hybrid scorer can get raw content scores
+// without the final sort/slice, then blend them with NCF predictions
+async function scoreAllCandidates(userId, { city } = {}) {
+  const profile = await buildUserProfile(userId);
+  const useBehavioral = profile.interactionCount >= COLD_START_THRESHOLD;
+  const candidates = await getCandidatePlaces(profile.interactedPlaceIds, city);
+
+  let scored;
+
+  if (useBehavioral) {
+    scored = candidates.map(place => ({
+      ...place,
+      contentScore: parseFloat(scorePlaceBehavioral(
+        place,
+        profile.categoryAffinities,
+        profile.priceLevelAffinities
+      ).toFixed(4)),
+    }));
+  } else {
+    const prefs = await getPreferences(userId);
+    const preferredCategories = prefs?.preferred_categories || [];
+    const preferredPriceRange = prefs?.preferred_price_range || { min: 1, max: 4 };
+
+    scored = candidates.map(place => ({
+      ...place,
+      contentScore: parseFloat(scorePlaceColdStart(
+        place,
+        preferredCategories,
+        preferredPriceRange
+      ).toFixed(4)),
+    }));
+  }
+
+  return {
+    scored,
+    meta: {
+      mode: useBehavioral ? 'behavioral' : 'cold_start',
+      interactionCount: profile.interactionCount,
+      totalCandidates: candidates.length,
+    },
+  };
+}
+
+module.exports = { getContentBasedRecommendations, scoreAllCandidates };
