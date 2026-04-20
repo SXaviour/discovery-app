@@ -1,17 +1,17 @@
 {
-  "timestamp": "2026-04-09T16:39:55.781Z",
+  "timestamp": "2026-04-20T17:01:57.882Z",
   "testSize": 15468,
   "trainSize": 61100,
-  "rmse": 0.43445,
-  "rmseStars": 1.74,
+  "rmse": 0.357694,
+  "rmseStars": 1.43,
   "precisionAtK": {
     "k": 10,
-    "value": 0.1126,
-    "usersEvaluated": 382
+    "value": 0.1116,
+    "usersEvaluated": 371
   },
   "coverage": {
-    "value": 0.6584,
-    "placesRecommended": 609,
+    "value": 0.5784,
+    "placesRecommended": 535,
     "totalPlaces": 925
   }
 }

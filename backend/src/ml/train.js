@@ -16,14 +16,14 @@ const path = require('path');
 const db   = require('../config/database');
 
 const MODELS_DIR         = path.join(__dirname, '../../models');
-const EMBEDDING_DIM      = 32;  // How many numbers represent each user/place — higher = more expressive but slower
-const CATEGORY_EMBED_DIM = 8;   // Smaller embedding for categories — only 7 unique values, doesn't need 32
+const EMBEDDING_DIM      = 32;  // 32 dims needed to capture nuance across 400 users × 925 places — 16 was too small, precision dropped
+const CATEGORY_EMBED_DIM = 8;   // Smaller embedding for categories — only 7 unique values, doesn't need more
 const EPOCHS             = 50;  // Max epochs — early stopping will likely cut this short
 const BATCH_SIZE         = 512; // How many samples to process at once during training
 const LEARNING_RATE      = 0.001;
 const DROPOUT_RATE       = 0.3; // During training, randomly switch off 30% of neurons each pass to prevent memorisation
 const PATIENCE           = 5;   // Stop training if val_loss hasn't improved in this many epochs
-const NEGATIVE_RATIO     = 4;   // For every real interaction, generate 4 "user never visited this" negatives
+const NEGATIVE_RATIO     = 3;   // 3:1 gives enough contrast to learn what NOT to recommend, without over-penalising unseen places
 
 // STEP 1: LOAD INTERACTIONS
 
@@ -130,7 +130,7 @@ function generateNegativeSamples(positiveSamples, placeLookup) {
         place_id:    placeId,
         category:    placeLookup[placeId].category,
         subcategory: placeLookup[placeId].subcategory,
-        score:       0.0,
+        score:       0.1, // soft "unknown" — not visited doesn't mean disliked
       });
       hardAdded++;
     }
@@ -152,7 +152,7 @@ function generateNegativeSamples(positiveSamples, placeLookup) {
         place_id:    placeId,
         category:    placeLookup[placeId].category,
         subcategory: placeLookup[placeId].subcategory,
-        score:       0.0,
+        score:       0.1, // soft "unknown" — not visited doesn't mean disliked
       });
       easyAdded++;
     }
