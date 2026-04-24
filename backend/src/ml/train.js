@@ -21,8 +21,8 @@ const CATEGORY_EMBED_DIM = 8;   // Smaller embedding for categories — only 7 u
 const EPOCHS             = 50;  // Max epochs — early stopping will likely cut this short
 const BATCH_SIZE         = 512; // How many samples to process at once during training
 const LEARNING_RATE      = 0.001;
-const DROPOUT_RATE       = 0.3; // During training, randomly switch off 30% of neurons each pass to prevent memorisation
-const PATIENCE           = 5;   // Stop training if val_loss hasn't improved in this many epochs
+const DROPOUT_RATE       = 0.2; // 20% dropout — 30% was too aggressive for ~100K samples and caused underfitting
+const PATIENCE           = 10;  // Give training more room to find a better minimum before giving up
 const NEGATIVE_RATIO     = 3;   // 3:1 gives enough contrast to learn what NOT to recommend, without over-penalising unseen places
 
 // STEP 1: LOAD INTERACTIONS
