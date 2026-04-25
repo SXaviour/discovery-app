@@ -19,13 +19,10 @@ const MODELS_DIR = path.join(__dirname, '../../models');
 // NCF only needs to differentiate between already-good options
 const NCF_CANDIDATE_POOL = 100;
 
-// RRF damping constant — standard value from the original RRF paper
-// Dampens the gap between rank 1 and rank 10, making blending more stable
-const RRF_K = 60;
-
-// Content carries 70%, NCF rank boost carries 30%
-const CONTENT_WEIGHT = 0.7;
-const NCF_WEIGHT     = 0.3;
+// Content carries 60%, NCF carries 40% — both are min-max normalised within the pool
+// so they're on the same scale before blending
+const CONTENT_WEIGHT = 0.6;
+const NCF_WEIGHT     = 0.4;
 
 // Cached model and maps — loaded once on first request, reused after that
 let cachedModel = null;
@@ -130,25 +127,26 @@ async function getHybridRecommendations(userId, { city, limit = 20 } = {}) {
   let finalList;
 
   if (useHybrid) {
-    // Sort top 100 by NCF score to get NCF ranks
-    const rankedByNcf = [...top].sort((a, b) => {
-      const scoreA = ncfScores.get(a.id) ?? 0;
-      const scoreB = ncfScores.get(b.id) ?? 0;
-      return scoreB - scoreA;
-    });
+    // Min-max normalise both content scores and NCF scores within the pool
+    // so they're on the same 0–1 scale before blending.
+    // RRF was collapsing NCF's contribution to ~0.003 range — negligible.
+    // Normalising within the pool gives NCF a real 40% voice.
+    const ncfValues     = top.map(p => ncfScores.get(p.id) ?? 0);
+    const minNCF        = Math.min(...ncfValues);
+    const maxNCF        = Math.max(...ncfValues);
+    const ncfRange      = maxNCF - minNCF || 1; // guard against all-same scores
 
-    // Assign each place its NCF rank, then blend using RRF
-    // rankBoost = 1 / (rank + RRF_K) — lower rank = higher boost
-    // This keeps scores scale-independent: we're blending a content score (0–1)
-    // with a rank signal (0.016 at rank 1 down to ~0.006 at rank 100)
-    const ncfRankMap = new Map(rankedByNcf.map((place, i) => [place.id, i]));
+    const contentValues = top.map(p => p.contentScore);
+    const minContent    = Math.min(...contentValues);
+    const maxContent    = Math.max(...contentValues);
+    const contentRange  = maxContent - minContent || 1;
 
     const blendedTop = top.map(place => {
-      const ncfRank  = ncfRankMap.get(place.id) ?? NCF_CANDIDATE_POOL;
-      const rankBoost = 1 / (ncfRank + RRF_K);
+      const normContent = (place.contentScore - minContent) / contentRange;
+      const normNCF     = ((ncfScores.get(place.id) ?? minNCF) - minNCF) / ncfRange;
       return {
         ...place,
-        score: parseFloat((CONTENT_WEIGHT * place.contentScore + NCF_WEIGHT * rankBoost).toFixed(4)),
+        score: parseFloat((CONTENT_WEIGHT * normContent + NCF_WEIGHT * normNCF).toFixed(4)),
       };
     });
 
