@@ -86,7 +86,6 @@ function qualityScore(place) {
 //    Google review count  (external — many people globally reviewed it)
 //    Favorite count       (our users saved it)
 //    Visited count        (our users physically went)
-// All three use a log scale — the jump from 10 to 100 matters more than 5000 to 10000
 // Google carries more weight (70%) since our app is still new and has fewer users
 function popularityScore(place) {
   const googleCount   = place.google_review_count || 0;

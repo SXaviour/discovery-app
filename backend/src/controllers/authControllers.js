@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const { findUserByEmail, findUserById, createUser, updateUserLastLogin, emailExists } = require('../database/helpers');
 
 
-// ─── REGISTER ────────────────────────────────────────────────────────────────
+// REGISTER 
 // Creates a new user account
 // POST /api/auth/register
 // Body: { email, password, username }
@@ -74,7 +74,7 @@ async function register(req, res) {
 }
 
 
-// ─── LOGIN ────────────────────────────────────────────────────────────────────
+// LOGIN 
 // Checks credentials and starts a session
 // POST /api/auth/login
 // Body: { email, password }
@@ -140,7 +140,7 @@ async function login(req, res) {
 }
 
 
-// ─── LOGOUT ───────────────────────────────────────────────────────────────────
+// LOGOUT 
 // Destroys the session and clears the cookie
 // POST /api/auth/logout
 
@@ -166,7 +166,7 @@ async function logout(req, res) {
 }
 
 
-// ─── GET ME ───────────────────────────────────────────────────────────────────
+// GET ME
 // Returns the currently logged-in user's info
 // GET /api/auth/me
 

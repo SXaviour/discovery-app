@@ -23,7 +23,7 @@ const BATCH_SIZE         = 512; // How many samples to process at once during tr
 const LEARNING_RATE      = 0.001;
 const DROPOUT_RATE       = 0.2; // 20% dropout — 30% was too aggressive for ~100K samples and caused underfitting
 const PATIENCE           = 10;  // Give training more room to find a better minimum before giving up
-const NEGATIVE_RATIO     = 3;   // 3:1 gives enough contrast to learn what NOT to recommend, without over-penalising unseen places
+const NEGATIVE_RATIO     = 4;   // More contrast examples — works well now that negatives are soft (0.1) not hard (0.0)
 
 // STEP 1: LOAD INTERACTIONS
 
@@ -211,9 +211,9 @@ function buildModel(numUsers, numPlaces, numCategories, numSubcategories) {
   // Concatenate all four embeddings, then pass through dense layers
   // Dropout layers randomly disable neurons during training to prevent overfitting
   const concat  = tf.layers.concatenate().apply([userFlat, placeFlat, categoryFlat, subcategoryFlat]);
-  const dense1  = tf.layers.dense({ units: 64, activation: 'relu' }).apply(concat);
+  const dense1  = tf.layers.dense({ units: 128, activation: 'relu' }).apply(concat);
   const drop1   = tf.layers.dropout({ rate: DROPOUT_RATE }).apply(dense1);
-  const dense2  = tf.layers.dense({ units: 32, activation: 'relu' }).apply(drop1);
+  const dense2  = tf.layers.dense({ units: 64, activation: 'relu' }).apply(drop1);
   const drop2   = tf.layers.dropout({ rate: DROPOUT_RATE }).apply(dense2);
 
   // Final output: a single number between 0–1 (the predicted preference score)

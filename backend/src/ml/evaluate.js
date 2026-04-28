@@ -121,6 +121,12 @@ async function evaluate() {
 
   console.log(`  Train: ${trainSet.length}, Test: ${testSet.length}\n`);
 
+  // Count how many training interactions each place has — used for popularity baseline
+  const placePopularity = {};
+  for (const s of trainSet) {
+    placePopularity[s.place_id] = (placePopularity[s.place_id] || 0) + 1;
+  }
+
   // ─── RMSE ───────────────────────────────────────────────
   // Predict each test sample and measure how far off we are
   console.log('Calculating RMSE...');
@@ -170,9 +176,12 @@ async function evaluate() {
     placeLookup[row.id] = { category: row.category, subcategory: row.subcategory };
   }
 
-  let totalPrecision     = 0;
-  let usersEvaluated     = 0;
-  const allRecommendedIds = new Set();
+  let totalPrecision        = 0;
+  let totalNdcg             = 0;
+  let totalRandomPrecision  = 0;
+  let totalPopularPrecision = 0;
+  let usersEvaluated        = 0;
+  const allRecommendedIds   = new Set();
 
   const userIds = Object.keys(testPositivesByUser).map(Number);
 
@@ -210,19 +219,57 @@ async function evaluate() {
     scored.sort((a, b) => b.score - a.score);
     const topK = scored.slice(0, K);
 
-    // Count how many of the top K were actually liked
+    // ── NCF precision + NDCG ──────────────────────────────
     let hits = 0;
-    for (const rec of topK) {
-      allRecommendedIds.add(rec.placeId);
-      if (positives.has(rec.placeId)) hits++;
+    let dcg  = 0;
+    for (let i = 0; i < topK.length; i++) {
+      allRecommendedIds.add(topK[i].placeId);
+      if (positives.has(topK[i].placeId)) {
+        hits++;
+        dcg += 1 / Math.log2(i + 2); // rank 1 → log2(2)=1, rank 2 → log2(3)≈0.63 …
+      }
     }
 
+    // Ideal DCG: assume all positives appear at the very top
+    const numRelevant = Math.min(positives.size, K);
+    let idcg = 0;
+    for (let i = 0; i < numRelevant; i++) idcg += 1 / Math.log2(i + 2);
+
     totalPrecision += hits / K;
+    totalNdcg      += idcg > 0 ? dcg / idcg : 0;
+
+    // ── Random baseline ───────────────────────────────────
+    // Shuffle the same candidate pool and pick the first K
+    const randomTopK = [...candidatePlaceIds].sort(() => Math.random() - 0.5).slice(0, K);
+    let randomHits = 0;
+    for (const pid of randomTopK) {
+      if (positives.has(pid)) randomHits++;
+    }
+    totalRandomPrecision += randomHits / K;
+
+    // ── Popularity baseline ───────────────────────────────
+    // Recommend the K most-interacted places from the training set the user hasn't seen
+    const popularTopK = [...candidatePlaceIds]
+      .sort((a, b) => (placePopularity[b] || 0) - (placePopularity[a] || 0))
+      .slice(0, K);
+    let popularHits = 0;
+    for (const pid of popularTopK) {
+      if (positives.has(pid)) popularHits++;
+    }
+    totalPopularPrecision += popularHits / K;
+
     usersEvaluated++;
   }
 
-  const avgPrecision = usersEvaluated > 0 ? totalPrecision / usersEvaluated : 0;
-  console.log(`  Precision@${K}: ${(avgPrecision * 100).toFixed(1)}% (${usersEvaluated} users evaluated)\n`);
+  const avgPrecision        = usersEvaluated > 0 ? totalPrecision        / usersEvaluated : 0;
+  const avgNdcg             = usersEvaluated > 0 ? totalNdcg             / usersEvaluated : 0;
+  const avgRandomPrecision  = usersEvaluated > 0 ? totalRandomPrecision  / usersEvaluated : 0;
+  const avgPopularPrecision = usersEvaluated > 0 ? totalPopularPrecision / usersEvaluated : 0;
+
+  console.log(`  Precision@${K}: ${(avgPrecision * 100).toFixed(1)}% (${usersEvaluated} users evaluated)`);
+  console.log(`  NDCG@${K}:      ${(avgNdcg * 100).toFixed(1)}%`);
+  console.log(`  Random baseline:     ${(avgRandomPrecision * 100).toFixed(1)}%`);
+  console.log(`  Popularity baseline: ${(avgPopularPrecision * 100).toFixed(1)}%\n`);
 
   // ─── COVERAGE ───────────────────────────────────────────
   const totalPlaces = Object.keys(placeMap).length;
@@ -237,12 +284,20 @@ async function evaluate() {
     rmse:        parseFloat(rmse.toFixed(6)),
     rmseStars:   parseFloat(rmseStars.toFixed(2)),
     precisionAtK: {
-      k:              K,
-      value:          parseFloat(avgPrecision.toFixed(4)),
-      usersEvaluated: usersEvaluated,
+      k:                  K,
+      value:              parseFloat(avgPrecision.toFixed(4)),
+      usersEvaluated:     usersEvaluated,
+    },
+    ndcgAtK: {
+      k:     K,
+      value: parseFloat(avgNdcg.toFixed(4)),
+    },
+    baselines: {
+      random:     parseFloat(avgRandomPrecision.toFixed(4)),
+      popularity: parseFloat(avgPopularPrecision.toFixed(4)),
     },
     coverage: {
-      value:            parseFloat(coverage.toFixed(4)),
+      value:             parseFloat(coverage.toFixed(4)),
       placesRecommended: allRecommendedIds.size,
       totalPlaces:       totalPlaces,
     },
@@ -255,9 +310,12 @@ async function evaluate() {
 
   console.log('Results saved to models/evaluation_results.json');
   console.log('\n── Summary ──────────────────────────────');
-  console.log(`  RMSE:          ${rmse.toFixed(4)} (${rmseStars.toFixed(2)} stars)`);
-  console.log(`  Precision@${K}: ${(avgPrecision * 100).toFixed(1)}%`);
-  console.log(`  Coverage:      ${(coverage * 100).toFixed(1)}%`);
+  console.log(`  RMSE:                ${rmse.toFixed(4)} (${rmseStars.toFixed(2)} stars)`);
+  console.log(`  Precision@${K}:       ${(avgPrecision * 100).toFixed(1)}%`);
+  console.log(`  NDCG@${K}:           ${(avgNdcg * 100).toFixed(1)}%`);
+  console.log(`  Coverage:            ${(coverage * 100).toFixed(1)}%`);
+  console.log(`  Random baseline:     ${(avgRandomPrecision * 100).toFixed(1)}%`);
+  console.log(`  Popularity baseline: ${(avgPopularPrecision * 100).toFixed(1)}%`);
 
   await db.end();
 }

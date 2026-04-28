@@ -29,7 +29,7 @@ let cachedModel = null;
 let cachedMaps  = null;
 
 // Loads the trained NCF model from disk
-// Returns null if the model files don't exist (run npm run train first)
+// Returns null if the model files don't exist
 async function loadNCFModel() {
   if (cachedModel && cachedMaps) return { model: cachedModel, maps: cachedMaps };
 

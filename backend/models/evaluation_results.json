@@ -1,17 +1,25 @@
 {
-  "timestamp": "2026-04-25T18:21:34.302Z",
+  "timestamp": "2026-04-28T16:23:01.068Z",
   "testSize": 15468,
   "trainSize": 61100,
-  "rmse": 0.345686,
-  "rmseStars": 1.38,
+  "rmse": 0.356174,
+  "rmseStars": 1.42,
   "precisionAtK": {
     "k": 10,
-    "value": 0.1493,
-    "usersEvaluated": 379
+    "value": 0.1589,
+    "usersEvaluated": 380
+  },
+  "ndcgAtK": {
+    "k": 10,
+    "value": 0.2532
+  },
+  "baselines": {
+    "random": 0.0084,
+    "popularity": 0.0221
   },
   "coverage": {
-    "value": 0.7632,
-    "placesRecommended": 706,
+    "value": 0.7773,
+    "placesRecommended": 719,
     "totalPlaces": 925
   }
 }
