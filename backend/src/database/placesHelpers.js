@@ -20,7 +20,7 @@ async function getPlaces({ city, category, price_level, limit = 50, offset = 0 }
            average_rating, total_ratings, price_level, image_url, description
     FROM places
     WHERE ${conditions.join(' AND ')}
-    ORDER BY google_rating DESC NULLS LAST
+    ORDER BY google_review_count DESC NULLS LAST
     LIMIT $${i++} OFFSET $${i++}
   `, values);
 
