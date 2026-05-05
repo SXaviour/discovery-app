@@ -3,7 +3,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: '/api',
   withCredentials: true, // Sends the session cookie with every request so the backend knows who's logged in
 });
 
