@@ -40,8 +40,10 @@ function starDisplay(rating) {
   return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
 }
 
+const PRICE_LABELS = { 1: 'Budget', 2: 'Affordable', 3: 'Mid-range', 4: 'Premium' };
+
 function priceDisplay(level) {
-  return '£'.repeat(level || 1);
+  return PRICE_LABELS[level] || null;
 }
 
 export default function Home() {
@@ -266,7 +268,7 @@ export default function Home() {
                                 {(parseFloat(place.average_rating) || parseFloat(place.google_rating) || 0).toFixed(1)}
                               </span>
                               <span className="badge"><MapPin size={11} /> {place.city}</span>
-                              <span className="badge">{priceDisplay(place.price_level)}</span>
+                              {priceDisplay(place.price_level) && <span className="badge">{priceDisplay(place.price_level)}</span>}
                               {place.open_now && <span className="badge badge--open">Open now</span>}
                             </div>
                           </div>
