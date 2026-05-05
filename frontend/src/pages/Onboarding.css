@@ -1,0 +1,316 @@
+/* Styles for the onboarding screen shown after first registration */
+
+.ob-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #080613;
+  padding: 24px 16px;
+}
+
+.ob-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 560px;
+  padding: 40px 44px 44px;
+}
+
+/* Top row: logo and step dots */
+.ob-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+
+.ob-logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.ob-logo span {
+  font-family: 'Aladin', cursive;
+  color: #7c3aed;
+  font-weight: 400;
+}
+
+.ob-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.ob-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  transition: background 0.3s, transform 0.3s;
+}
+
+.ob-dot.active {
+  background: #7c3aed;
+  transform: scale(1.3);
+}
+
+.ob-dot.done {
+  background: rgba(124, 58, 237, 0.45);
+}
+
+/* Step content area fades in when the step changes */
+.ob-body {
+  animation: ob-fade 0.25s ease;
+}
+
+@keyframes ob-fade {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ob-step-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #7c3aed;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.ob-title {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 10px;
+  line-height: 1.25;
+}
+
+.ob-sub {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.48);
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+/* Category chip grid — 3 columns */
+.ob-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 36px;
+}
+
+.ob-cat-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 18px 12px 15px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, color 0.18s;
+}
+
+.ob-cat-chip:hover {
+  border-color: rgba(124, 58, 237, 0.5);
+  background: rgba(124, 58, 237, 0.07);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.ob-cat-chip.selected {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.18);
+  color: #fff;
+}
+
+/* Price range selector */
+.ob-price-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.ob-price-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 20px 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.ob-price-btn:hover {
+  border-color: rgba(124, 58, 237, 0.45);
+  background: rgba(124, 58, 237, 0.07);
+}
+
+.ob-price-btn.selected {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.18);
+}
+
+.ob-price-symbol {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.ob-price-label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.ob-price-btn.selected .ob-price-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.ob-price-hint {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+/* Interest tags — flowing pill chips */
+.ob-interest-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 36px;
+}
+
+.ob-interest-chip {
+  padding: 9px 18px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, color 0.18s;
+}
+
+.ob-interest-chip:hover {
+  border-color: rgba(124, 58, 237, 0.5);
+  background: rgba(124, 58, 237, 0.07);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.ob-interest-chip.selected {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.18);
+  color: #fff;
+}
+
+/* Bottom action row */
+.ob-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ob-btn-skip {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.32);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.ob-btn-skip:hover {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.ob-btn-next {
+  padding: 12px 30px;
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ob-btn-next:hover:not(:disabled) {
+  background: #f5a623;
+}
+
+.ob-btn-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .ob-page {
+    align-items: flex-start;
+    padding: 32px 16px 40px;
+  }
+
+  .ob-card {
+    padding: 28px 20px 32px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    max-width: 100%;
+  }
+
+  .ob-title {
+    font-size: 1.3rem;
+  }
+
+  .ob-cat-grid {
+    gap: 9px;
+  }
+
+  .ob-cat-chip {
+    padding: 14px 8px 12px;
+    font-size: 0.72rem;
+    gap: 7px;
+  }
+
+  .ob-price-row {
+    gap: 8px;
+  }
+
+  .ob-price-btn {
+    padding: 16px 6px;
+    gap: 5px;
+  }
+
+  .ob-price-symbol {
+    font-size: 0.88rem;
+  }
+
+  .ob-price-label {
+    font-size: 0.6rem;
+  }
+
+  .ob-interest-chip {
+    font-size: 0.8rem;
+    padding: 8px 15px;
+  }
+}

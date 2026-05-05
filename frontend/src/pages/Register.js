@@ -1,6 +1,6 @@
 // Registration page, redirects to /discover after a new account is created
 import { useState } from 'react';
-import { Link, useNavigate, Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import heroImg from '../assets/images/herosectionsunset.png';
@@ -10,12 +10,14 @@ function Register() {
   const [email, setEmail]       = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [error, setError]           = useState('');
+  const [loading, setLoading]       = useState(false);
+  const [justRegistered, setJustRegistered] = useState(false);
 
   const { register, user } = useAuth();
-  const navigate = useNavigate();
 
+  // Redirect to onboarding after a fresh sign-up, or to discover if already logged in
+  if (justRegistered) return <Navigate to="/onboarding" replace />;
   if (user) return <Navigate to="/discover" replace />;
 
   const handleSubmit = async (e) => {
@@ -24,7 +26,7 @@ function Register() {
     setLoading(true);
     try {
       await register(email, password, username);
-      navigate('/discover');
+      setJustRegistered(true);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong. Please try again.');
     } finally {
