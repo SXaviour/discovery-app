@@ -2,15 +2,23 @@
 
 const db = require('../config/database');
 
-// Get all places, with optional filters for city, category, and price level
-async function getPlaces({ city, category, price_level, limit = 50, offset = 0 } = {}) {
+// Get all places, with optional filters for city, category, price level, and review count range
+async function getPlaces({ city, category, price_level, min_review_count, max_review_count, min_rating, limit = 50, offset = 0 } = {}) {
   const conditions = ['is_closed = false'];
   const values = [];
   let i = 1;
 
-  if (city)        { conditions.push(`city = $${i++}`);        values.push(city); }
-  if (category)    { conditions.push(`category = $${i++}`);    values.push(category); }
-  if (price_level) { conditions.push(`price_level = $${i++}`); values.push(price_level); }
+  if (city)              { conditions.push(`city = $${i++}`);                values.push(city); }
+  if (category)          { conditions.push(`category = $${i++}`);            values.push(category); }
+  if (price_level)       { conditions.push(`price_level = $${i++}`);         values.push(price_level); }
+  if (min_review_count != null) { conditions.push(`google_review_count >= $${i++}`); values.push(min_review_count); }
+  if (max_review_count != null) { conditions.push(`google_review_count < $${i++}`);  values.push(max_review_count); }
+  if (min_rating != null)       { conditions.push(`google_rating >= $${i++}`);       values.push(min_rating); }
+
+  // When fetching hidden gems (by review count range), sort by rating so best ones come first
+  const orderBy = (min_review_count != null || max_review_count != null)
+    ? 'google_rating DESC NULLS LAST'
+    : 'google_review_count DESC NULLS LAST';
 
   values.push(limit, offset);
 
@@ -20,7 +28,7 @@ async function getPlaces({ city, category, price_level, limit = 50, offset = 0 }
            average_rating, total_ratings, price_level, image_url, description
     FROM places
     WHERE ${conditions.join(' AND ')}
-    ORDER BY google_review_count DESC NULLS LAST
+    ORDER BY ${orderBy}
     LIMIT $${i++} OFFSET $${i++}
   `, values);
 

@@ -1,0 +1,908 @@
+/* Styles for the combined Discover and Explore feed page */
+
+.disc-page {
+  min-height: 100vh;
+  background: #f5f4fc;
+  color: #111827;
+}
+
+/* Sticky navbar */
+.disc-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+  height: 62px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.disc-logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #111827;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.disc-logo span {
+  font-family: 'Aladin', cursive;
+  color: #7c3aed;
+  font-weight: 400;
+}
+
+/* Centre column — holds the search bar */
+.disc-nav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.disc-search-wrap {
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 420px;
+}
+
+.disc-search-icon {
+  position: absolute;
+  left: 12px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.disc-search {
+  width: 100%;
+  padding: 9px 36px 9px 36px;
+  background: #f3f2f8;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  color: #111827;
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.disc-search::placeholder {
+  color: #b0adc8;
+}
+
+.disc-search:focus {
+  border-color: rgba(124, 58, 237, 0.5);
+  background: #fff;
+}
+
+.disc-search-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+}
+
+.disc-search-clear:hover {
+  color: #6b7280;
+}
+
+/* Right side nav items */
+.disc-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Location pill */
+.disc-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #f3f2f8;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: #374151;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  user-select: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.disc-location:hover {
+  border-color: #d1d5db;
+  background: #ebe9f5;
+}
+
+/* City dropdown */
+.disc-city-drop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 6px;
+  min-width: 160px;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 200;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.1) transparent;
+}
+
+.disc-city-opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.disc-city-opt:hover {
+  background: #f3f2f8;
+  color: #111827;
+}
+
+.disc-city-opt.active {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+/* Filter icon button */
+.disc-filter-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f3f2f8;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.disc-filter-btn:hover {
+  background: #ebe9f5;
+  color: #111827;
+}
+
+/* Avatar button */
+.disc-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Avatar dropdown menu */
+.disc-avatar-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 10px;
+  min-width: 175px;
+  z-index: 200;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.disc-avatar-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #9ca3af;
+  padding: 4px 8px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 6px;
+}
+
+.disc-avatar-link,
+.disc-avatar-logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+  color: #374151;
+}
+
+.disc-avatar-logout {
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+
+.disc-avatar-link:hover,
+.disc-avatar-logout:hover {
+  background: #f3f2f8;
+  color: #111827;
+}
+
+/* Filter modal */
+.disc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.disc-modal {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px 24px 0 0;
+  padding: 28px 24px 36px;
+  width: 100%;
+  max-width: 540px;
+}
+
+.disc-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.disc-modal-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.disc-modal-header button {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.disc-modal-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+
+.disc-modal-prices {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.disc-modal-price-btn {
+  padding: 9px 18px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f9f8ff;
+  color: #6b7280;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.disc-modal-price-btn.active {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+}
+
+.disc-modal-apply {
+  width: 100%;
+  padding: 14px;
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.disc-modal-apply:hover {
+  background: #6d28d9;
+}
+
+/* Main body */
+.disc-body {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 20px 24px 64px;
+}
+
+
+/* Mood chips */
+.disc-moods {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 28px;
+  padding-bottom: 2px;
+}
+
+.disc-moods::-webkit-scrollbar { display: none; }
+
+.disc-mood-chip {
+  flex-shrink: 0;
+  padding: 9px 18px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 999px;
+  background: #fff;
+  color: #6b7280;
+  font-size: 0.83rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.disc-mood-chip:hover {
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+.disc-mood-chip.active {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+}
+
+/* Results count shown when filtering */
+.disc-results-count {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-bottom: 16px;
+}
+
+/* Section wrapper */
+.disc-section {
+  margin-bottom: 40px;
+}
+
+.disc-section-head {
+  margin-bottom: 16px;
+}
+
+.disc-section-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 3px;
+}
+
+.disc-section-sub {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+/* Horizontal scroll row */
+.disc-hscroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.disc-hscroll::-webkit-scrollbar { display: none; }
+
+/* Hero cards (tall portrait, in the "Picked for You" row) */
+.disc-hero-card {
+  flex-shrink: 0;
+  width: 220px;
+  height: 290px;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform 0.2s;
+}
+
+.disc-hero-card:hover {
+  transform: scale(1.02);
+}
+
+.disc-hero-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Keep dark — sits on top of a photo */
+.disc-hero-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(5,2,18,0.9) 0%, rgba(5,2,18,0.1) 55%);
+  pointer-events: none;
+}
+
+.disc-hero-label {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 36px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+  border-radius: 999px;
+  padding: 4px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.disc-hero-card-bottom {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+}
+
+/* Keep white — sits on top of a photo */
+.disc-hero-card-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.disc-hero-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Small cards (in trending / hidden gems rows) */
+.disc-small-card {
+  flex-shrink: 0;
+  width: 180px;
+  height: 230px;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform 0.2s;
+}
+
+.disc-small-card:hover {
+  transform: scale(1.02);
+}
+
+.disc-small-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Keep dark — sits on top of a photo */
+.disc-small-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(5,2,18,0.88) 0%, rgba(5,2,18,0.05) 50%);
+  pointer-events: none;
+}
+
+.disc-small-card-bottom {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+}
+
+/* Keep white — sits on top of a photo */
+.disc-small-card-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Category colour dot on cards */
+.disc-cat-dot {
+  position: absolute;
+  top: 10px;
+  right: 36px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Category badge on feed cards */
+.disc-cat-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #fff;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+/* Heart button (sits on all card types) */
+.disc-heart {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+  border: none;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.disc-heart:hover {
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+}
+
+.disc-heart.active {
+  color: #ef4444;
+}
+
+/* Shared info item (star + rating, pin + city) — on photos so keep light */
+.disc-info-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+}
+
+.disc-review-count {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.5);
+}
+
+/* Main feed grid (used for filtered results) */
+.disc-feed-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.disc-feed-card {
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #ede9fe;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.disc-feed-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.09);
+}
+
+.disc-feed-card-img-wrap {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+}
+
+.disc-feed-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.disc-feed-card:hover .disc-feed-card-img {
+  transform: scale(1.04);
+}
+
+.disc-feed-card-body {
+  padding: 12px 14px 14px;
+}
+
+.disc-feed-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.disc-feed-card-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.disc-mood-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #7c3aed;
+  background: rgba(124,58,237,0.08);
+  border-radius: 999px;
+  padding: 3px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.disc-feed-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Override info-item and review count colors for feed cards */
+.disc-feed-card-body .disc-info-item {
+  color: #6b7280;
+}
+
+.disc-feed-card-body .disc-review-count {
+  color: #9ca3af;
+}
+
+.disc-social-proof {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  margin-left: auto;
+}
+
+/* Empty state */
+.disc-empty {
+  text-align: center;
+  padding: 60px 0;
+}
+
+.disc-empty p {
+  color: #9ca3af;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+}
+
+.disc-empty-btn {
+  padding: 9px 22px;
+  background: rgba(124,58,237,0.08);
+  border: 1px solid rgba(124,58,237,0.3);
+  color: #7c3aed;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.disc-empty-btn:hover {
+  background: rgba(124,58,237,0.15);
+}
+
+/* Skeleton loading */
+.disc-skeletons { display: flex; flex-direction: column; gap: 20px; }
+
+.disc-skel-row {
+  display: flex;
+  gap: 14px;
+}
+
+.disc-skel-hero-card {
+  flex-shrink: 0;
+  width: 220px;
+  height: 290px;
+  border-radius: 18px;
+  background: rgba(0,0,0,0.06);
+  animation: disc-pulse 1.5s ease-in-out infinite;
+}
+
+.disc-skel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.disc-skel-card {
+  height: 200px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.06);
+  animation: disc-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes disc-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.7; }
+}
+
+/*  Hidden Gems banner  */
+
+.disc-gems-banner {
+  position: relative;
+  width: 100%;
+  height: 270px;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.disc-gems-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 60%;
+}
+
+/* Light left-side fog only — lets the warm yellows on the right breathe */
+.disc-gems-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(8,6,19,0.82) 0%, rgba(8,6,19,0.35) 48%, rgba(8,6,19,0.05) 100%);
+}
+
+.disc-gems-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 30px;
+}
+
+.disc-gems-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a78bfa;
+  margin-bottom: 8px;
+}
+
+.disc-gems-headline {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+
+.disc-gems-tagline {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.disc-gems-scroll {
+  padding-top: 2px;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+  .disc-feed-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 560px) {
+  .disc-nav {
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .disc-logo {
+    font-size: 1.15rem;
+  }
+
+  .disc-search-wrap {
+    max-width: unset;
+  }
+
+  .disc-location span {
+    display: none;
+  }
+
+  .disc-location {
+    padding: 7px 10px;
+  }
+
+  .disc-body {
+    padding: 16px 14px 48px;
+  }
+
+  .disc-hero-card {
+    width: 180px;
+    height: 240px;
+  }
+
+  .disc-small-card {
+    width: 150px;
+    height: 200px;
+  }
+
+  .disc-feed-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .disc-skel-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .disc-gems-banner {
+    height: 220px;
+  }
+
+  .disc-gems-headline {
+    font-size: 1.25rem;
+  }
+}

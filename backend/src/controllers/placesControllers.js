@@ -7,13 +7,16 @@ const { getPlaces, getPlaceById, getPlaceStats } = require('../database/placesHe
 // Example: /api/places?city=Dublin&category=restaurant&price_level=2&limit=20&offset=0
 async function listPlaces(req, res) {
   try {
-    const { city, category, price_level, limit = 20, offset = 0 } = req.query;
+    const { city, category, price_level, min_review_count, max_review_count, min_rating, limit = 20, offset = 0 } = req.query;
 
     const places = await getPlaces({
       city,
       category,
-      price_level: price_level ? parseInt(price_level) : undefined,
-      limit: parseInt(limit),
+      price_level:       price_level       ? parseInt(price_level)       : undefined,
+      min_review_count:  min_review_count  ? parseInt(min_review_count)  : undefined,
+      max_review_count:  max_review_count  ? parseInt(max_review_count)  : undefined,
+      min_rating:        min_rating        ? parseFloat(min_rating)       : undefined,
+      limit:  parseInt(limit),
       offset: parseInt(offset),
     });
 
