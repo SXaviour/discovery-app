@@ -12,7 +12,6 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Fetch the editorial summary (description) for one place using its Google place ID
 async function fetchDescription(googlePlaceId) {
   const res = await fetch(`${BASE_URL}/${googlePlaceId}`, {
     headers: {
@@ -25,7 +24,6 @@ async function fetchDescription(googlePlaceId) {
   return data.editorialSummary?.text || null;
 }
 
-// Update the description for one place in the database
 async function updateDescription(id, description) {
   await db.query(
     'UPDATE places SET description = $1 WHERE id = $2',
@@ -34,7 +32,6 @@ async function updateDescription(id, description) {
 }
 
 async function run() {
-  // Only fetch places that don't have a description yet
   const result = await db.query(
     'SELECT id, name, google_place_id FROM places WHERE description IS NULL AND google_place_id IS NOT NULL ORDER BY id'
   );
@@ -54,11 +51,10 @@ async function run() {
         updated++;
         process.stdout.write(`\r  Updated ${updated}, skipped ${skipped}...`);
       } else {
-        // Google doesn't have a description for every place
         skipped++;
       }
 
-      await sleep(80); // Small pause to stay within rate limits
+      await sleep(80);
     } catch (err) {
       console.error(`\n  Failed for "${place.name}": ${err.message}`);
     }

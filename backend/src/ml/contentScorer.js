@@ -18,10 +18,9 @@ const COLD_START_THRESHOLD = 5;
 
 // How much each factor contributes to the final score
 const WEIGHTS = {
-  category:   0.40,
-  priceLevel: 0.15,
+  category:   0.50,
   quality:    0.30, // blended rating from Google + our users
-  popularity: 0.15, // how many people have reviewed it
+  popularity: 0.20, // how many people have reviewed it
 };
 
 // Fetch all places the user hasn't interacted with yet
@@ -97,31 +96,24 @@ function popularityScore(place) {
   return externalScore * 0.7 + internalScore * 0.3;
 }
 
-// Score one place for a user based on their category and price affinities
-function scorePlaceBehavioral(place, categoryAffinities, priceLevelAffinities) {
-  const categoryScore = categoryAffinities[place.category]       ?? 0.1;
-  const priceScore    = priceLevelAffinities[place.price_level]  ?? 0.3;
+// Score one place for a user based on their category affinities
+function scorePlaceBehavioral(place, categoryAffinities) {
+  const categoryScore = categoryAffinities[place.category] ?? 0.1;
 
   return (
     categoryScore          * WEIGHTS.category   +
-    priceScore             * WEIGHTS.priceLevel +
     qualityScore(place)    * WEIGHTS.quality    +
     popularityScore(place) * WEIGHTS.popularity
   );
 }
 
 // Score one place for a new user based on what they said they prefer
-function scorePlaceColdStart(place, preferredCategories, preferredPriceRange) {
+function scorePlaceColdStart(place, preferredCategories) {
   const inCategory    = preferredCategories.length === 0 || preferredCategories.includes(place.category);
-  const categoryScore = inCategory ? 1.0 : 0.2; // still show non-preferred categories occasionally
-
-  const price    = place.price_level;
-  const inRange  = !price || (price >= preferredPriceRange.min && price <= preferredPriceRange.max);
-  const priceScore = inRange ? 1.0 : 0.0;
+  const categoryScore = inCategory ? 1.0 : 0.2;
 
   return (
     categoryScore          * WEIGHTS.category   +
-    priceScore             * WEIGHTS.priceLevel +
     qualityScore(place)    * WEIGHTS.quality    +
     popularityScore(place) * WEIGHTS.popularity
   );
@@ -140,28 +132,17 @@ async function getContentBasedRecommendations(userId, { city, limit = 20 } = {})
   let scored;
 
   if (useBehavioral) {
-    // Score based on what the user has actually done
     scored = candidates.map(place => ({
       ...place,
-      score: parseFloat(scorePlaceBehavioral(
-        place,
-        profile.categoryAffinities,
-        profile.priceLevelAffinities
-      ).toFixed(4)),
+      score: parseFloat(scorePlaceBehavioral(place, profile.categoryAffinities).toFixed(4)),
     }));
   } else {
-    // Score based on what the user said they like when they signed up
     const prefs = await getPreferences(userId);
-    const preferredCategories  = prefs?.preferred_categories  || [];
-    const preferredPriceRange  = prefs?.preferred_price_range || { min: 1, max: 4 };
+    const preferredCategories = prefs?.preferred_categories || [];
 
     scored = candidates.map(place => ({
       ...place,
-      score: parseFloat(scorePlaceColdStart(
-        place,
-        preferredCategories,
-        preferredPriceRange
-      ).toFixed(4)),
+      score: parseFloat(scorePlaceColdStart(place, preferredCategories).toFixed(4)),
     }));
   }
 
@@ -190,24 +171,15 @@ async function scoreAllCandidates(userId, { city } = {}) {
   if (useBehavioral) {
     scored = candidates.map(place => ({
       ...place,
-      contentScore: parseFloat(scorePlaceBehavioral(
-        place,
-        profile.categoryAffinities,
-        profile.priceLevelAffinities
-      ).toFixed(4)),
+      contentScore: parseFloat(scorePlaceBehavioral(place, profile.categoryAffinities).toFixed(4)),
     }));
   } else {
     const prefs = await getPreferences(userId);
     const preferredCategories = prefs?.preferred_categories || [];
-    const preferredPriceRange = prefs?.preferred_price_range || { min: 1, max: 4 };
 
     scored = candidates.map(place => ({
       ...place,
-      contentScore: parseFloat(scorePlaceColdStart(
-        place,
-        preferredCategories,
-        preferredPriceRange
-      ).toFixed(4)),
+      contentScore: parseFloat(scorePlaceColdStart(place, preferredCategories).toFixed(4)),
     }));
   }
 

@@ -10,48 +10,41 @@ import './Discover.css';
 
 const MOODS = [
   { label: '🔥 Trending',  value: 'trending' },
-  { label: '🍽️ Food',      value: 'restaurant' },
-  { label: '🌿 Chill',     value: 'park' },
-  { label: '🎉 Nightlife', value: 'nightlife' },
-  { label: '🎨 Culture',   value: 'culture' },
-  { label: '🛍️ Shopping',  value: 'shopping' },
+  { label: '🏃 Adventure', value: 'adventure' },
+  { label: '🏠 Indoor',    value: 'indoor_activity' },
+  { label: '🌿 Outdoors',  value: 'outdoor_activity' },
+  { label: '✨ Unique',     value: 'unique_experience' },
+  { label: '⚽ Sports',     value: 'sports_fitness' },
 ];
 
 const CAT_COLORS = {
-  restaurant:    '#f59e0b',
-  bar:           '#6366f1',
-  museum:        '#14b8a6',
-  park:          '#22c55e',
-  entertainment: '#ec4899',
-  shopping:      '#f97316',
-  attraction:    '#8b5cf6',
+  adventure:         '#ef4444',
+  indoor_activity:   '#6366f1',
+  outdoor_activity:  '#22c55e',
+  unique_experience: '#8b5cf6',
+  sports_fitness:    '#f59e0b',
 };
 
 const CAT_PLURAL = {
-  restaurant:    'restaurants',
-  bar:           'bars',
-  museum:        'museums',
-  park:          'parks',
-  entertainment: 'entertainment',
-  shopping:      'shopping',
-  attraction:    'attractions',
+  adventure:         'adventure',
+  indoor_activity:   'indoor activities',
+  outdoor_activity:  'outdoor activities',
+  unique_experience: 'unique experiences',
+  sports_fitness:    'sports & fitness',
 };
 
 const FALLBACKS = {
-  restaurant:    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80',
-  bar:           'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80',
-  museum:        'https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=800&q=80',
-  park:          'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=800&q=80',
-  entertainment: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80',
-  shopping:      'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80',
-  attraction:    'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=800&q=80',
+  adventure:         'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80',
+  indoor_activity:   'https://images.unsplash.com/photo-1511882150382-421056c89033?w=800&q=80',
+  outdoor_activity:  'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=800&q=80',
+  unique_experience: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80',
+  sports_fitness:    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80',
 };
 
-const PRICE_LABELS = { 1: 'Budget', 2: 'Affordable', 3: 'Mid-range', 4: 'Premium' };
 const UNLOCK_THRESHOLD = 5;
 
 function imgFallback(cat) {
-  return FALLBACKS[cat] || FALLBACKS.attraction;
+  return FALLBACKS[cat] || FALLBACKS.unique_experience;
 }
 
 function fmtCount(n) {
@@ -74,7 +67,6 @@ export default function Discover() {
   const [activeMood, setActiveMood]     = useState(null);
   const [searchQuery, setSearchQuery]   = useState('');
   const [filterOpen, setFilterOpen]     = useState(false);
-  const [priceFilter, setPriceFilter]   = useState(null);
   const [menuOpen, setMenuOpen]         = useState(false);
   const [cityDropOpen, setCityDropOpen] = useState(false);
   const [loading, setLoading]           = useState(true);
@@ -151,10 +143,8 @@ export default function Discover() {
 
   function getFilteredFeed() {
     let result =
-      activeMood === 'trending'  ? [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)) :
-      activeMood === 'nightlife' ? places.filter(p => p.category === 'bar' || p.category === 'entertainment') :
-      activeMood === 'culture'   ? places.filter(p => p.category === 'museum' || p.category === 'attraction') :
-      activeMood                 ? places.filter(p => p.category === activeMood) :
+      activeMood === 'trending' ? [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)) :
+      activeMood                ? places.filter(p => p.category === activeMood) :
       places;
 
     if (searchQuery) {
@@ -166,7 +156,6 @@ export default function Discover() {
       );
     }
 
-    if (priceFilter) result = result.filter(p => p.price_level === priceFilter);
 
     return result;
   }
@@ -254,15 +243,6 @@ export default function Discover() {
             <div className="disc-modal-header">
               <h3>Filter</h3>
               <button onClick={() => setFilterOpen(false)}><X size={18} /></button>
-            </div>
-            <p className="disc-modal-label">Price range</p>
-            <div className="disc-modal-prices">
-              <button className={`disc-modal-price-btn${!priceFilter ? ' active' : ''}`} onClick={() => setPriceFilter(null)}>Any</button>
-              {[1,2,3,4].map(level => (
-                <button key={level} className={`disc-modal-price-btn${priceFilter === level ? ' active' : ''}`} onClick={() => setPriceFilter(level)}>
-                  {PRICE_LABELS[level]}
-                </button>
-              ))}
             </div>
             <button className="disc-modal-apply" onClick={() => setFilterOpen(false)}>Apply</button>
           </div>
@@ -461,7 +441,6 @@ function FeedCard({ place, favorited, onHeart, onClick }) {
         <div className="disc-feed-card-meta">
           <span className="disc-info-item"><Star size={11} fill="currentColor" />{(parseFloat(place.average_rating) || parseFloat(place.google_rating) || 0).toFixed(1)}</span>
           <span className="disc-info-item"><MapPin size={11} />{place.city}</span>
-          {PRICE_LABELS[place.price_level] && <span className="disc-info-item">{PRICE_LABELS[place.price_level]}</span>}
           {fmtCount(place.google_review_count) && <span className="disc-social-proof">{fmtCount(place.google_review_count)} reviews</span>}
         </div>
       </div>

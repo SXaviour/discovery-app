@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "migrate": "node src/scripts/migrate.js",
     "fetch-places": "node src/scripts/fetchPlaces.js",
     "enrich-descriptions": "node src/scripts/enrichDescriptions.js",
     "seed-interactions": "node src/scripts/seedInteractions.js",

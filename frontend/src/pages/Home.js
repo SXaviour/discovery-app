@@ -8,24 +8,20 @@ import heroImg from '../assets/images/heroimageday2.png';
 import './Home.css';
 
 const CATEGORIES = [
-  { label: 'Restaurants',   value: 'restaurant' },
-  { label: 'Bars',          value: 'bar' },
-  { label: 'Museums',       value: 'museum' },
-  { label: 'Parks',         value: 'park' },
-  { label: 'Entertainment', value: 'entertainment' },
-  { label: 'Shopping',      value: 'shopping' },
-  { label: 'Attractions',   value: 'attraction' },
+  { label: 'Adventure',          value: 'adventure' },
+  { label: 'Indoor Fun',         value: 'indoor_activity' },
+  { label: 'Outdoors',           value: 'outdoor_activity' },
+  { label: 'Unique Experiences', value: 'unique_experience' },
+  { label: 'Sports & Fitness',   value: 'sports_fitness' },
 ];
 
 // Fallback images from Unsplash used when a place has no image stored in the database
 const CATEGORY_FALLBACKS = {
-  restaurant:    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80',
-  bar:           'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&q=80',
-  museum:        'https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=400&q=80',
-  park:          'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=400&q=80',
-  entertainment: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&q=80',
-  shopping:      'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80',
-  attraction:    'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=400&q=80',
+  adventure:         'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&q=80',
+  indoor_activity:   'https://images.unsplash.com/photo-1511882150382-421056c89033?w=400&q=80',
+  outdoor_activity:  'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=400&q=80',
+  unique_experience: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&q=80',
+  sports_fitness:    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80',
 };
 
 function placeFallback(category) {
@@ -40,11 +36,6 @@ function starDisplay(rating) {
   return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
 }
 
-const PRICE_LABELS = { 1: 'Budget', 2: 'Affordable', 3: 'Mid-range', 4: 'Premium' };
-
-function priceDisplay(level) {
-  return PRICE_LABELS[level] || null;
-}
 
 export default function Home() {
   useAuth();
@@ -52,8 +43,6 @@ export default function Home() {
 
   const [activeCategory, setActiveCategory] = useState('restaurant');
   const [searchQuery, setSearchQuery]       = useState('');
-  const [selectedCity, setSelectedCity]     = useState('');
-  const [cities, setCities]                 = useState([]);
   const [popularPlaces, setPopularPlaces]   = useState([]);
   const [categoryImages, setCategoryImages] = useState({});
   const [loading, setLoading]               = useState(true);
@@ -68,13 +57,6 @@ export default function Home() {
       .catch(() => setPopularPlaces([]))
       .finally(() => setLoading(false));
 
-    // Fetch all city names to populate the city dropdown in the search bar
-    api.get('/places/stats')
-      .then(res => {
-        const unique = [...new Set((res.data.stats || []).map(s => s.city))].sort();
-        setCities(unique);
-      })
-      .catch(() => setCities([]));
 
     // Fetch one place per category so we can use its image as the category tile background
     Promise.all(
@@ -93,7 +75,6 @@ export default function Home() {
     const params = new URLSearchParams();
     if (searchQuery) params.set('search', searchQuery);
     if (activeCategory) params.set('category', activeCategory);
-    if (selectedCity) params.set('city', selectedCity);
     navigate(`/places?${params.toString()}`);
   }
 
@@ -170,16 +151,7 @@ export default function Home() {
             </div>
             <div className="hero-search-box" style={{ flex: 1 }}>
               <MapPin size={16} />
-              <select
-                value={selectedCity}
-                onChange={e => setSelectedCity(e.target.value)}
-                className="city-select"
-              >
-                <option value="">All Cities</option>
-                {cities.map(city => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
+              <span className="city-select">Dublin</span>
             </div>
           </form>
         </div>
@@ -267,8 +239,6 @@ export default function Home() {
                                 <span className="stars">{starDisplay(place.average_rating || place.google_rating)}</span>
                                 {(parseFloat(place.average_rating) || parseFloat(place.google_rating) || 0).toFixed(1)}
                               </span>
-                              <span className="badge"><MapPin size={11} /> {place.city}</span>
-                              {priceDisplay(place.price_level) && <span className="badge">{priceDisplay(place.price_level)}</span>}
                               {place.open_now && <span className="badge badge--open">Open now</span>}
                             </div>
                           </div>

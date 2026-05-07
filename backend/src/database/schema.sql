@@ -25,6 +25,7 @@ CREATE TABLE places (
   city VARCHAR(100) NOT NULL,
   category VARCHAR(50) NOT NULL,
   subcategory VARCHAR(50),
+  tags TEXT[] DEFAULT '{}',
   
   -- Location
   address TEXT,
