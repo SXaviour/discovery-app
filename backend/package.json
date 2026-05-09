@@ -12,6 +12,7 @@
     "seed-interactions": "node src/scripts/seedInteractions.js",
     "train": "node src/ml/train.js",
     "evaluate": "node src/ml/evaluate.js",
+    "update-images": "node src/scripts/updateImages.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

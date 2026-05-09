@@ -400,8 +400,8 @@ function HeroCard({ place, favorited, onHeart, onClick }) {
 function SmallCard({ place, favorited, onHeart, onClick }) {
   return (
     <div className="disc-small-card" onClick={onClick}>
-      <img src={place.image_url || FALLBACKS[place.category] || FALLBACKS.attraction} alt={place.name}
-        className="disc-small-card-img" onError={e => { e.target.src = FALLBACKS[place.category] || FALLBACKS.attraction; }} />
+      <img src={place.image_url || imgFallback(place.category)} alt={place.name}
+        className="disc-small-card-img" onError={e => { e.target.src = imgFallback(place.category); }} />
       <div className="disc-small-card-overlay" />
       {place.category && <span className="disc-cat-dot" style={{ background: CAT_COLORS[place.category] }} />}
       <button className={`disc-heart${favorited ? ' active' : ''}`} onClick={onHeart} aria-label="Toggle favourite">
@@ -426,8 +426,8 @@ function FeedCard({ place, favorited, onHeart, onClick }) {
   return (
     <div className="disc-feed-card" onClick={onClick}>
       <div className="disc-feed-card-img-wrap">
-        <img src={place.image_url || FALLBACKS[place.category] || FALLBACKS.attraction} alt={place.name}
-          className="disc-feed-card-img" onError={e => { e.target.src = FALLBACKS[place.category] || FALLBACKS.attraction; }} />
+        <img src={place.image_url || imgFallback(place.category)} alt={place.name}
+          className="disc-feed-card-img" onError={e => { e.target.src = imgFallback(place.category); }} />
         {place.category && <span className="disc-cat-badge" style={{ background: CAT_COLORS[place.category] }}>{place.category.charAt(0).toUpperCase() + place.category.slice(1)}</span>}
         <button className={`disc-heart${favorited ? ' active' : ''}`} onClick={onHeart} aria-label="Toggle favourite">
           <Heart size={14} fill={favorited ? 'currentColor' : 'none'} />

@@ -6,7 +6,8 @@ require('dotenv').config();
 const db = require('../config/database');
 
 const API_KEY  = process.env.GOOGLE_API_KEY;
-const BASE_URL = 'https://places.googleapis.com/v1/places';
+const SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
+const PHOTO_BASE  = 'https://places.googleapis.com/v1';
 
 // Each entry is one Google text search. category, subcategory and tags are assigned
 // at the query level — we don't rely on Google's type labels for our taxonomy.
@@ -114,7 +115,7 @@ async function textSearch(query, pageToken = null) {
   const body = { textQuery: query, pageSize: 20 };
   if (pageToken) body.pageToken = pageToken;
 
-  const res = await fetch(`${BASE_URL}:searchText`, {
+  const res = await fetch(SEARCH_URL, {
     method: 'POST',
     headers: {
       'Content-Type':    'application/json',
@@ -128,7 +129,7 @@ async function textSearch(query, pageToken = null) {
 }
 
 function buildPhotoUrl(photoName) {
-  return `${BASE_URL}/${photoName}/media?maxHeightPx=800&key=${API_KEY}&skipHttpRedirect=true`;
+  return `${PHOTO_BASE}/${photoName}/media?maxHeightPx=800&key=${API_KEY}&skipHttpRedirect=true`;
 }
 
 // Save one place to the database — category, subcategory and tags come from the search definition

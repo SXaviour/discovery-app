@@ -25,7 +25,7 @@ const CATEGORY_FALLBACKS = {
 };
 
 function placeFallback(category) {
-  return CATEGORY_FALLBACKS[category] || CATEGORY_FALLBACKS.attraction;
+  return CATEGORY_FALLBACKS[category] || CATEGORY_FALLBACKS.adventure;
 }
 
 function starDisplay(rating) {
