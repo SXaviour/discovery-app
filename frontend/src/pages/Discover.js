@@ -6,12 +6,11 @@ import { Search, MapPin, Heart, Star, SlidersHorizontal, X, LogOut, User, Chevro
 import campfireImg from '../assets/images/campfire.png';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import hiddenGemsImg from '../assets/images/hidden gems.jpg';
 import './Discover.css';
 
 const VIBES = [
   { label: 'Adrenaline',       sub: 'Get your heart racing', Icon: Zap,      color: '#f59e0b', cat: 'adventure'         },
-  { label: 'Chill',            sub: 'Relax & unwind',        Icon: Leaf,     color: '#22c55e', cat: 'indoor_activity'   },
+  { label: 'Chill',            sub: 'Relax & unwind',        Icon: Leaf,     color: '#290fa1', cat: 'indoor_activity'   },
   { label: 'Creative',         sub: 'Make something',        Icon: Palette,  color: '#ec4899', cat: 'unique_experience' },
   { label: 'Fun with friends', sub: 'Group activities',      Icon: Users,    color: '#60a5fa', cat: 'adventure'         },
   { label: 'Outdoor',          sub: 'Get in nature',         Icon: Mountain, color: '#22c55e', cat: 'outdoor_activity'  },
@@ -19,10 +18,17 @@ const VIBES = [
 ];
 
 const COLLECTIONS = [
-  { label: 'Rainy Day Activities', sub: 'Perfect ways to have fun indoors', ideas: 12, cat: 'indoor_activity',   bg: 'https://images.unsplash.com/photo-1511882150382-421056c89033?w=800&q=80' },
-  { label: 'Date Night Ideas',     sub: 'Fun & unique experiences',          ideas: 8,  cat: 'unique_experience', bg: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80' },
-  { label: 'Free Things to Do',    sub: 'Great experiences for $0',          ideas: 15, cat: 'outdoor_activity',  bg: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=800&q=80' },
-  { label: 'Group Activities',     sub: 'Fun things to do together',         ideas: 10, cat: 'adventure',         bg: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80' },
+  { label: 'Rainy Day Activities', sub: 'Best ways to beat the rain indoors',   ideas: 12, cat: 'indoor_activity',   bg: 'https://images.unsplash.com/photo-1511882150382-421056c89033?w=800&q=80' },
+  { label: 'Date Night Ideas',     sub: 'Romantic experiences for two',         ideas: 8,  cat: 'unique_experience', bg: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80' },
+  { label: 'Free Things to Do',    sub: 'Great experiences that cost nothing',  ideas: 15, cat: 'outdoor_activity',  bg: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80' },
+  { label: 'Group Activities',     sub: 'Get the whole crew together',          ideas: 10, cat: 'adventure',         bg: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80' },
+  { label: 'Birthday Ideas',       sub: 'Make it a day to remember',            ideas: 9,  cat: 'adventure',         bg: 'https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=800&q=80' },
+  { label: 'Adrenaline Rush',      sub: 'For those who live on the edge',       ideas: 7,  cat: 'adventure',         bg: 'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&q=80' },
+  { label: 'Competitive Fun',      sub: 'May the best person win',              ideas: 8,  cat: 'sports_fitness',    bg: 'https://images.unsplash.com/photo-1545809074-59472b3f5ecc?w=800&q=80' },
+  { label: 'Creative Experiences', sub: 'Make something with your hands',       ideas: 6,  cat: 'unique_experience', bg: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80' },
+  { label: 'Open Late',            sub: 'Still going after midnight',           ideas: 10, cat: 'indoor_activity',   bg: 'https://images.unsplash.com/photo-1514565131-fce0801e6785?w=800&q=80' },
+  { label: 'Sunset Spots',         sub: 'Golden hour views worth chasing',      ideas: 6,  cat: 'outdoor_activity',  bg: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80' },
+  { label: 'Hidden Gems',          sub: 'Highly rated · Rarely crowded',        ideas: 11, cat: 'unique_experience', bg: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80' },
 ];
 
 const CATEGORIES = [
@@ -83,7 +89,6 @@ export default function Discover() {
 
   const [recs, setRecs]                 = useState([]);
   const [places, setPlaces]             = useState([]);
-  const [hiddenGems, setHiddenGems]     = useState([]);
   const [profile, setProfile]           = useState(null);
   const [favorites, setFavorites]       = useState(new Set());
   const [cities, setCities]             = useState([]);
@@ -97,8 +102,9 @@ export default function Discover() {
 
   const forYouRef   = useRef(null);
   const trendingRef = useRef(null);
-  const familyRef   = useRef(null);
-  const friendsRef  = useRef(null);
+  const familyRef       = useRef(null);
+  const friendsRef      = useRef(null);
+  const collectionsRef  = useRef(null);
 
   function scroll(ref, dir) {
     if (ref.current) ref.current.scrollBy({ left: dir * 340, behavior: 'smooth' });
@@ -108,18 +114,15 @@ export default function Discover() {
     setLoading(true);
     try {
       const q = city ? `city=${encodeURIComponent(city)}&` : '';
-      const [recsRes, placesRes, gemsRes] = await Promise.all([
+      const [recsRes, placesRes] = await Promise.all([
         api.get(`/recommendations?${q}limit=20`),
         api.get(`/places?${q}limit=200`),
-        api.get(`/places?${q}min_review_count=20&max_review_count=450&min_rating=4.2&limit=12`),
       ]);
       setRecs(recsRes.data.recommendations || []);
       setPlaces(placesRes.data.places || []);
-      setHiddenGems(gemsRes.data.places || []);
     } catch {
       setRecs([]);
       setPlaces([]);
-      setHiddenGems([]);
     } finally {
       setLoading(false);
     }
@@ -500,9 +503,12 @@ export default function Discover() {
                   <h2 className="disc-section-title">Collections</h2>
                   <p className="disc-section-sub">Curated lists for every occasion</p>
                 </div>
-                <button className="disc-see-all" onClick={() => {}}>See all <ArrowRight size={13} /></button>
+                <div className="disc-scroll-arrows">
+                  <button className="disc-arrow-btn" onClick={() => scroll(collectionsRef, -1)}><ChevronLeft size={16} /></button>
+                  <button className="disc-arrow-btn" onClick={() => scroll(collectionsRef, 1)}><ChevronRight size={16} /></button>
+                </div>
               </div>
-              <div className="disc-collections-grid">
+              <div className="disc-hscroll" ref={collectionsRef}>
                 {COLLECTIONS.map(({ label, sub, ideas, cat, bg }) => (
                   <button key={label} className="disc-collection-card" onClick={() => setActiveMood(cat)}
                     style={{ backgroundImage: `url(${bg})` }}>
@@ -547,27 +553,6 @@ export default function Discover() {
               </section>
             )}
 
-            {hiddenGems.length > 0 && (
-              <section className="disc-section">
-                <div className="disc-gems-banner">
-                  <img src={hiddenGemsImg} alt="" className="disc-gems-banner-img" />
-                  <div className="disc-gems-overlay" />
-                  <div className="disc-gems-content">
-                    <div className="disc-gems-eyebrow">💎 Hidden Gems</div>
-                    <h2 className="disc-gems-headline">
-                      {selectedCity || 'Dublin'}'s<br />best-kept secrets
-                    </h2>
-                    <p className="disc-gems-tagline">Highly rated · Rarely crowded</p>
-                  </div>
-                </div>
-                <div className="disc-hscroll disc-gems-scroll">
-                  {hiddenGems.map(place => (
-                    <SmallCard key={place.id} place={place} favorited={favorites.has(place.id)}
-                      onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
-                  ))}
-                </div>
-              </section>
-            )}
           </>
         )}
 
@@ -637,7 +622,6 @@ function SmallCard({ place, favorited, onHeart, onClick }) {
       <img src={place.image_url || imgFallback(place.category)} alt={place.name}
         className="disc-small-card-img" onError={e => { e.target.src = imgFallback(place.category); }} />
       <div className="disc-small-card-overlay" />
-      {place.category && <span className="disc-cat-dot" style={{ background: CAT_COLORS[place.category] }} />}
       <button className={`disc-heart${favorited ? ' active' : ''}`} onClick={onHeart} aria-label="Toggle favourite">
         <Heart size={14} fill={favorited ? 'currentColor' : 'none'} />
       </button>

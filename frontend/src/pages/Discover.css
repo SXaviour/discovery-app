@@ -770,15 +770,6 @@
   text-overflow: ellipsis;
 }
 
-/* Category colour dot on cards */
-.disc-cat-dot {
-  position: absolute;
-  top: 10px;
-  right: 36px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
 
 /* Category badge on feed cards */
 .disc-cat-badge {
@@ -989,65 +980,6 @@
   50%       { opacity: 0.7; }
 }
 
-/*  Hidden Gems banner  */
-
-.disc-gems-banner {
-  position: relative;
-  width: 100%;
-  height: 270px;
-  border-radius: 20px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-
-.disc-gems-banner-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 60%;
-}
-
-/* Light left-side fog only — lets the warm yellows on the right breathe */
-.disc-gems-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to right, rgba(8,6,19,0.82) 0%, rgba(8,6,19,0.35) 48%, rgba(8,6,19,0.05) 100%);
-}
-
-.disc-gems-content {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 0 30px;
-}
-
-.disc-gems-eyebrow {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #a78bfa;
-  margin-bottom: 8px;
-}
-
-.disc-gems-headline {
-  font-size: 1.55rem;
-  font-weight: 800;
-  color: #fff;
-  line-height: 1.15;
-  margin-bottom: 8px;
-}
-
-.disc-gems-tagline {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.disc-gems-scroll {
-  padding-top: 2px;
-}
 
 /* Tablet */
 @media (max-width: 900px) {
@@ -1101,13 +1033,6 @@
     grid-template-columns: 1fr;
   }
 
-  .disc-gems-banner {
-    height: 220px;
-  }
-
-  .disc-gems-headline {
-    font-size: 1.25rem;
-  }
 }
 
 /* ===== SECTION ACTION HEADER (title + arrows / see all) ===== */
@@ -1349,16 +1274,13 @@
 }
 
 /* ===== COLLECTIONS ===== */
-.disc-collections-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-
 .disc-collection-card {
+  flex-shrink: 0;
   position: relative;
+  width: 200px;
   height: 160px;
   border-radius: 16px;
+  scroll-snap-align: start;
   overflow: hidden;
   cursor: pointer;
   background-size: cover;
@@ -1409,9 +1331,6 @@
 
 @media (max-width: 900px) {
   .disc-vibes-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .disc-collections-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
