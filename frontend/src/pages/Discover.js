@@ -214,18 +214,12 @@ export default function Discover() {
   })();
 
   const friendsPlaces = (() => {
-    const filtered = places.filter(p => p.tags?.includes('group activity'));
-    const countByTag = {};
-    const deduped = filtered.filter(p => {
-      const matchTag = p.tags?.find(t => FAMILY_TAGS.includes(t)) || p.subcategory || 'other';
-      countByTag[matchTag] = (countByTag[matchTag] || 0) + 1;
-      return countByTag[matchTag] <= 2;
-    });
-    for (let i = deduped.length - 1; i > 0; i--) {
+    const arr = [...places.filter(p => p.tags?.includes('group activity'))];
+    for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [deduped[i], deduped[j]] = [deduped[j], deduped[i]];
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    return deduped.slice(0, 12);
+    return arr.slice(0, 12);
   })();
 
   const isFiltering  = activeMood !== null || searchQuery;
