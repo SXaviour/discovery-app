@@ -1,20 +1,37 @@
 // Combined discovery feed — AI-powered sections, mood filters, and place browser in one page
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { Search, MapPin, Heart, Star, SlidersHorizontal, X, LogOut, User, ChevronDown } from 'lucide-react';
+import { Search, MapPin, Heart, Star, SlidersHorizontal, X, LogOut, User, ChevronDown, Compass, Bookmark, Settings, Sparkles, Gamepad2, Mountain, Zap, Gift, Trophy, ChevronLeft, ChevronRight, Leaf, Palette, Users, ArrowRight } from 'lucide-react';
+import campfireImg from '../assets/images/campfire.png';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import hiddenGemsImg from '../assets/images/hidden gems.jpg';
 import './Discover.css';
 
-const MOODS = [
-  { label: '🔥 Trending',  value: 'trending' },
-  { label: '🏃 Adventure', value: 'adventure' },
-  { label: '🏠 Indoor',    value: 'indoor_activity' },
-  { label: '🌿 Outdoors',  value: 'outdoor_activity' },
-  { label: '✨ Unique',     value: 'unique_experience' },
-  { label: '⚽ Sports',     value: 'sports_fitness' },
+const VIBES = [
+  { label: 'Adrenaline',       sub: 'Get your heart racing', Icon: Zap,      color: '#f59e0b', cat: 'adventure'         },
+  { label: 'Chill',            sub: 'Relax & unwind',        Icon: Leaf,     color: '#22c55e', cat: 'indoor_activity'   },
+  { label: 'Creative',         sub: 'Make something',        Icon: Palette,  color: '#ec4899', cat: 'unique_experience' },
+  { label: 'Fun with friends', sub: 'Group activities',      Icon: Users,    color: '#60a5fa', cat: 'adventure'         },
+  { label: 'Outdoor',          sub: 'Get in nature',         Icon: Mountain, color: '#22c55e', cat: 'outdoor_activity'  },
+  { label: 'Unique',           sub: 'One of a kind',         Icon: Sparkles, color: '#a855f7', cat: 'unique_experience' },
+];
+
+const COLLECTIONS = [
+  { label: 'Rainy Day Activities', sub: 'Perfect ways to have fun indoors', ideas: 12, cat: 'indoor_activity',   bg: 'https://images.unsplash.com/photo-1511882150382-421056c89033?w=800&q=80' },
+  { label: 'Date Night Ideas',     sub: 'Fun & unique experiences',          ideas: 8,  cat: 'unique_experience', bg: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80' },
+  { label: 'Free Things to Do',    sub: 'Great experiences for $0',          ideas: 15, cat: 'outdoor_activity',  bg: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=800&q=80' },
+  { label: 'Group Activities',     sub: 'Fun things to do together',         ideas: 10, cat: 'adventure',         bg: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80' },
+];
+
+const CATEGORIES = [
+  { label: 'For You',   value: null,                Icon: Sparkles, color: '#22c55e' },
+  { label: 'Indoor',    value: 'indoor_activity',   Icon: Gamepad2, color: '#a855f7' },
+  { label: 'Outdoor',   value: 'outdoor_activity',  Icon: Mountain, color: '#f59e0b' },
+  { label: 'Adventure', value: 'adventure',         Icon: Zap,      color: '#f97316' },
+  { label: 'Unique',    value: 'unique_experience', Icon: Gift,     color: '#60a5fa' },
+  { label: 'Sports',    value: 'sports_fitness',    Icon: Trophy,   color: '#f97316' },
 ];
 
 const CAT_COLORS = {
@@ -40,6 +57,13 @@ const FALLBACKS = {
   unique_experience: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80',
   sports_fitness:    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80',
 };
+
+const FAMILY_TAGS = [
+  'bowling', 'laser tag', 'arcade', 'mini golf', 'VR gaming',
+  'skating', 'ice skating', 'trampoline', 'escape room',
+  'aquarium', 'family friendly', 'inflatable park',
+  'ninja warrior', 'go karting', 'obstacle course',
+];
 
 const UNLOCK_THRESHOLD = 5;
 
@@ -71,13 +95,22 @@ export default function Discover() {
   const [cityDropOpen, setCityDropOpen] = useState(false);
   const [loading, setLoading]           = useState(true);
 
+  const forYouRef   = useRef(null);
+  const trendingRef = useRef(null);
+  const familyRef   = useRef(null);
+  const friendsRef  = useRef(null);
+
+  function scroll(ref, dir) {
+    if (ref.current) ref.current.scrollBy({ left: dir * 340, behavior: 'smooth' });
+  }
+
   const fetchData = useCallback(async (city) => {
     setLoading(true);
     try {
       const q = city ? `city=${encodeURIComponent(city)}&` : '';
       const [recsRes, placesRes, gemsRes] = await Promise.all([
         api.get(`/recommendations?${q}limit=20`),
-        api.get(`/places?${q}limit=60`),
+        api.get(`/places?${q}limit=200`),
         api.get(`/places?${q}min_review_count=20&max_review_count=450&min_rating=4.2&limit=12`),
       ]);
       setRecs(recsRes.data.recommendations || []);
@@ -168,19 +201,87 @@ export default function Discover() {
   const showBecause      = interactionCount >= UNLOCK_THRESHOLD && topCat;
   const becausePlaces    = showBecause ? places.filter(p => p.category === topCat).slice(0, 12) : [];
 
-  const forYouRecs       = recs.slice(0, 6);
-  const mightLikeRecs    = recs.slice(6, 14);
-  const trending         = [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)).slice(0, 12);
+  const forYouRecs       = recs.slice(0, 8);
+  const mightLikeRecs    = recs.slice(8, 16);
+  const trending         = [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)).slice(0, 10);
+  const familyPlaces = (() => {
+    const arr = [...places.filter(p => p.tags?.some(t => FAMILY_TAGS.includes(t)))];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr.slice(0, 12);
+  })();
+
+  const friendsPlaces = (() => {
+    const filtered = places.filter(p => p.tags?.includes('group activity'));
+    const countByTag = {};
+    const deduped = filtered.filter(p => {
+      const matchTag = p.tags?.find(t => FAMILY_TAGS.includes(t)) || p.subcategory || 'other';
+      countByTag[matchTag] = (countByTag[matchTag] || 0) + 1;
+      return countByTag[matchTag] <= 2;
+    });
+    for (let i = deduped.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deduped[i], deduped[j]] = [deduped[j], deduped[i]];
+    }
+    return deduped.slice(0, 12);
+  })();
 
   const isFiltering  = activeMood !== null || searchQuery;
   const feedPlaces   = getFilteredFeed();
   const displayName  = user.username || user.email.split('@')[0];
 
   return (
+    <div className="disc-layout">
+
+      {/* SIDEBAR */}
+      <aside className="disc-sidebar">
+        <div className="disc-sidebar-logo">Urban <span>Explorer</span></div>
+
+        <nav className="disc-sidebar-nav">
+          <Link to="/discover" className="disc-sidebar-item active">
+            <Compass size={18} />
+            <span>Discover</span>
+          </Link>
+          <Link to="/saved" className="disc-sidebar-item">
+            <Bookmark size={18} />
+            <span>Saved</span>
+          </Link>
+          <Link to="/profile" className="disc-sidebar-item">
+            <User size={18} />
+            <span>Profile</span>
+          </Link>
+          <Link to="/settings" className="disc-sidebar-item">
+            <Settings size={18} />
+            <span>Settings</span>
+          </Link>
+        </nav>
+
+        <div className="disc-sidebar-promo" style={{ backgroundImage: `url(${campfireImg})` }}>
+          <div className="disc-sidebar-promo-overlay" />
+          <p className="disc-sidebar-promo-text">
+            Let's make your weekend{' '}
+            <span className="disc-sidebar-promo-highlight">unforgettable</span>
+          </p>
+        </div>
+
+        <div className="disc-sidebar-user">
+          <div className="disc-sidebar-avatar">{displayName[0].toUpperCase()}</div>
+          <div className="disc-sidebar-user-info">
+            <div className="disc-sidebar-user-name">{displayName}</div>
+            <div className="disc-sidebar-user-sub">View profile</div>
+          </div>
+        </div>
+      </aside>
+
     <div className="disc-page" onClick={() => { menuOpen && setMenuOpen(false); cityDropOpen && setCityDropOpen(false); }}>
 
       <nav className="disc-nav">
-        <Link to="/" className="disc-logo">Urban <span>Explorer</span></Link>
+        <div className="disc-nav-heading">
+          <div className="disc-nav-heading-title">Discover</div>
+          <div className="disc-nav-heading-sub">amazing <span>things to do</span></div>
+        </div>
 
         <div className="disc-nav-center">
           <div className="disc-search-wrap">
@@ -197,6 +298,9 @@ export default function Discover() {
                 <X size={14} />
               </button>
             )}
+            <button className="disc-search-filter" onClick={e => { e.stopPropagation(); setFilterOpen(true); }}>
+              <SlidersHorizontal size={14} />
+            </button>
           </div>
         </div>
 
@@ -214,10 +318,6 @@ export default function Discover() {
               </div>
             )}
           </div>
-
-          <button className="disc-filter-btn" onClick={e => { e.stopPropagation(); setFilterOpen(true); }}>
-            <SlidersHorizontal size={15} />
-          </button>
 
           <button className="disc-avatar" onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }}>
             {displayName[0].toUpperCase()}
@@ -251,16 +351,22 @@ export default function Discover() {
 
       <div className="disc-body">
 
-        <div className="disc-moods">
-          {MOODS.map(mood => (
-            <button
-              key={mood.value}
-              className={`disc-mood-chip${activeMood === mood.value ? ' active' : ''}`}
-              onClick={() => setActiveMood(activeMood === mood.value ? null : mood.value)}
-            >
-              {mood.label}
-            </button>
-          ))}
+        <div className="disc-cat-circles">
+          {CATEGORIES.map(({ label, value, Icon, color }) => {
+            const isActive = activeMood === value;
+            return (
+              <button
+                key={label}
+                className={`disc-cat-circle-btn${isActive ? ' active' : ''}`}
+                onClick={() => setActiveMood(value)}
+              >
+                <div className="disc-cat-circle-icon" style={isActive ? { borderColor: color } : {}}>
+                  <Icon size={26} color={color} />
+                </div>
+                <span className="disc-cat-circle-label">{label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {loading ? (
@@ -289,13 +395,19 @@ export default function Discover() {
           <>
             {forYouRecs.length > 0 && (
               <section className="disc-section">
-                <div className="disc-section-head">
-                  <h2 className="disc-section-title">For You</h2>
-                  <p className="disc-section-sub">Your top picks, ranked by the AI</p>
+                <div className="disc-section-action-head">
+                  <div>
+                    <h2 className="disc-section-title">✨Personalized for you</h2>
+                    <p className="disc-section-sub">Your top picks, ranked by the AI</p>
+                  </div>
+                  <div className="disc-scroll-arrows">
+                    <button className="disc-arrow-btn" onClick={() => scroll(forYouRef, -1)}><ChevronLeft size={16} /></button>
+                    <button className="disc-arrow-btn" onClick={() => scroll(forYouRef, 1)}><ChevronRight size={16} /></button>
+                  </div>
                 </div>
-                <div className="disc-hscroll">
-                  {forYouRecs.map(place => (
-                    <HeroCard key={place.id} place={place} favorited={favorites.has(place.id)}
+                <div className="disc-hscroll" ref={forYouRef}>
+                  {forYouRecs.map((place, i) => (
+                    <PersonalizedCard key={place.id} place={place} index={i} favorited={favorites.has(place.id)}
                       onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
                   ))}
                 </div>
@@ -304,18 +416,112 @@ export default function Discover() {
 
             {trending.length > 0 && (
               <section className="disc-section">
-                <div className="disc-section-head">
-                  <h2 className="disc-section-title">🔥 Trending Now</h2>
-                  <p className="disc-section-sub">Most visited spots right now</p>
+                <div className="disc-section-action-head">
+                  <div>
+                    <h2 className="disc-section-title">🔥Trending now</h2>
+                    <p className="disc-section-sub">Most visited spots right now</p>
+                  </div>
+                  <div className="disc-scroll-arrows">
+                    <button className="disc-arrow-btn" onClick={() => scroll(trendingRef, -1)}><ChevronLeft size={16} /></button>
+                    <button className="disc-arrow-btn" onClick={() => scroll(trendingRef, 1)}><ChevronRight size={16} /></button>
+                  </div>
                 </div>
-                <div className="disc-hscroll">
-                  {trending.map(place => (
+                <div className="disc-hscroll" ref={trendingRef}>
+                  {trending.map((place, i) => (
+                    <TrendingCard key={place.id} place={place} rank={i + 1} favorited={favorites.has(place.id)}
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {familyPlaces.length > 0 && (
+              <section className="disc-section">
+                <div className="disc-section-action-head">
+                  <div>
+                    <h2 className="disc-section-title">👨‍👩‍👧 Family Fun Time</h2>
+                    <p className="disc-section-sub">Great activities for all ages</p>
+                  </div>
+                  <div className="disc-scroll-arrows">
+                    <button className="disc-arrow-btn" onClick={() => scroll(familyRef, -1)}><ChevronLeft size={16} /></button>
+                    <button className="disc-arrow-btn" onClick={() => scroll(familyRef, 1)}><ChevronRight size={16} /></button>
+                  </div>
+                </div>
+                <div className="disc-hscroll" ref={familyRef}>
+                  {familyPlaces.map(place => (
                     <SmallCard key={place.id} place={place} favorited={favorites.has(place.id)}
                       onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
                   ))}
                 </div>
               </section>
             )}
+
+            <section className="disc-section">
+              <div className="disc-section-action-head">
+                <div>
+                  <h2 className="disc-section-title">Explore by vibe</h2>
+                  <p className="disc-section-sub">Find something that matches your mood</p>
+                </div>
+                <button className="disc-see-all" onClick={() => {}}>See all <ArrowRight size={13} /></button>
+              </div>
+              <div className="disc-vibes-grid">
+                {VIBES.map(({ label, sub, Icon, color, cat }) => (
+                  <button key={label} className="disc-vibe-pill" onClick={() => setActiveMood(cat)}>
+                    <div className="disc-vibe-icon" style={{ background: color + '22' }}>
+                      <Icon size={20} color={color} />
+                    </div>
+                    <div className="disc-vibe-text">
+                      <span className="disc-vibe-label">{label}</span>
+                      <span className="disc-vibe-sub">{sub}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {friendsPlaces.length > 0 && (
+              <section className="disc-section">
+                <div className="disc-section-action-head">
+                  <div>
+                    <h2 className="disc-section-title">👥 Perfect for Friends</h2>
+                    <p className="disc-section-sub">Group activities worth getting the crew together for</p>
+                  </div>
+                  <div className="disc-scroll-arrows">
+                    <button className="disc-arrow-btn" onClick={() => scroll(friendsRef, -1)}><ChevronLeft size={16} /></button>
+                    <button className="disc-arrow-btn" onClick={() => scroll(friendsRef, 1)}><ChevronRight size={16} /></button>
+                  </div>
+                </div>
+                <div className="disc-hscroll" ref={friendsRef}>
+                  {friendsPlaces.map(place => (
+                    <SmallCard key={place.id} place={place} favorited={favorites.has(place.id)}
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section className="disc-section">
+              <div className="disc-section-action-head">
+                <div>
+                  <h2 className="disc-section-title">Collections</h2>
+                  <p className="disc-section-sub">Curated lists for every occasion</p>
+                </div>
+                <button className="disc-see-all" onClick={() => {}}>See all <ArrowRight size={13} /></button>
+              </div>
+              <div className="disc-collections-grid">
+                {COLLECTIONS.map(({ label, sub, ideas, cat, bg }) => (
+                  <button key={label} className="disc-collection-card" onClick={() => setActiveMood(cat)}
+                    style={{ backgroundImage: `url(${bg})` }}>
+                    <div className="disc-collection-overlay" />
+                    <div className="disc-collection-text">
+                      <span className="disc-collection-label">{label}</span>
+                      <span className="disc-collection-sub">{sub}</span>
+                      <span className="disc-collection-count">{ideas} ideas</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
 
             {mightLikeRecs.length > 0 && (
               <section className="disc-section">
@@ -373,23 +579,57 @@ export default function Discover() {
 
       </div>
     </div>
+    </div>
   );
 }
 
-function HeroCard({ place, favorited, onHeart, onClick }) {
+const PERSONAL_TAGS = [
+  { check: p => (p.google_review_count || 0) > 800,                           label: '🔥 Trending'           },
+  { check: p => (parseFloat(p.google_rating) || 0) >= 4.5 && (p.google_review_count || 0) < 400, label: '💎 Hidden Gem' },
+  { check: p => ['adventure', 'sports_fitness'].includes(p.category),          label: '👥 Perfect for Friends' },
+  { check: p => p.category === 'unique_experience',                            label: '✨ One of a Kind'       },
+  { check: p => p.category === 'outdoor_activity',                             label: '🌿 Get Outside'         },
+];
+
+function PersonalizedCard({ place, index, favorited, onHeart, onClick }) {
+  const tags = PERSONAL_TAGS.filter(t => t.check(place)).slice(0, 2).map(t => t.label);
   return (
-    <div className="disc-hero-card" onClick={onClick}>
+    <div className="disc-personal-card" onClick={onClick}>
       <img src={place.image_url || imgFallback(place.category)} alt={place.name}
-        className="disc-hero-card-img" onError={e => { e.target.src = imgFallback(place.category); }} />
-      <div className="disc-hero-card-overlay" />
-      {place.category && <span className="disc-cat-dot" style={{ background: CAT_COLORS[place.category] }} />}
+        className="disc-personal-card-img" onError={e => { e.target.src = imgFallback(place.category); }} />
+      <div className="disc-personal-card-overlay" />
+      <div className="disc-personal-card-tags">
+        {tags.map(t => <span key={t} className="disc-personal-tag">{t}</span>)}
+      </div>
       <button className={`disc-heart${favorited ? ' active' : ''}`} onClick={onHeart} aria-label="Toggle favourite">
         <Heart size={14} fill={favorited ? 'currentColor' : 'none'} />
       </button>
-      <div className="disc-hero-card-bottom">
-        <div className="disc-hero-card-name">{place.name}</div>
+      <div className="disc-personal-card-bottom">
+        {place.category && <span className="disc-cat-badge-sm" style={{ background: CAT_COLORS[place.category] }}>{place.category.replace('_', ' ')}</span>}
+        <div className="disc-personal-card-name">{place.name}</div>
         <div className="disc-hero-card-meta">
-          <span className="disc-info-item"><Star size={11} fill="currentColor" />{(parseFloat(place.average_rating) || parseFloat(place.google_rating) || 0).toFixed(1)}</span>
+          <span className="disc-info-item"><Star size={10} fill="currentColor" />{(parseFloat(place.average_rating) || parseFloat(place.google_rating) || 0).toFixed(1)}</span>
+          {fmtCount(place.google_review_count) && <span className="disc-review-count">{fmtCount(place.google_review_count)} reviews</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TrendingCard({ place, rank, favorited, onHeart, onClick }) {
+  return (
+    <div className="disc-trending-card" onClick={onClick}>
+      <img src={place.image_url || imgFallback(place.category)} alt={place.name}
+        className="disc-trending-card-img" onError={e => { e.target.src = imgFallback(place.category); }} />
+      <div className="disc-trending-card-overlay" />
+      <div className="disc-trending-rank">{rank}</div>
+      <button className={`disc-heart${favorited ? ' active' : ''}`} onClick={onHeart} aria-label="Toggle favourite">
+        <Heart size={14} fill={favorited ? 'currentColor' : 'none'} />
+      </button>
+      <div className="disc-trending-card-bottom">
+        <div className="disc-trending-card-name">{place.name}</div>
+        <div className="disc-hero-card-meta">
+          <span className="disc-info-item"><Star size={10} fill="currentColor" />{(parseFloat(place.average_rating) || parseFloat(place.google_rating) || 0).toFixed(1)}</span>
           {fmtCount(place.google_review_count) && <span className="disc-review-count">{fmtCount(place.google_review_count)} reviews</span>}
         </div>
       </div>

@@ -23,7 +23,7 @@ async function getPlaces({ city, category, price_level, min_review_count, max_re
   values.push(limit, offset);
 
   const result = await db.query(`
-    SELECT id, name, city, category, subcategory, address,
+    SELECT id, name, city, category, subcategory, tags, address,
            latitude, longitude, google_rating, google_review_count,
            average_rating, total_ratings, price_level, image_url, description
     FROM places
