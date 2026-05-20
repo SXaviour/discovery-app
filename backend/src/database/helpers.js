@@ -65,6 +65,32 @@ async function emailExists(email) {
   return result.rows[0].exists;
 }
 
+// Get the stored bcrypt hash for a user (used when verifying current password before changes)
+async function getUserPasswordHash(userId) {
+  const result = await db.query(
+    'SELECT password_hash FROM users WHERE id = $1',
+    [userId]
+  );
+  return result.rows[0]?.password_hash || null;
+}
+
+// Update the username for a user
+async function updateUsername(userId, username) {
+  const result = await db.query(
+    'UPDATE users SET username = $1, updated_at = NOW() WHERE id = $2 RETURNING id, email, username',
+    [username, userId]
+  );
+  return result.rows[0] || null;
+}
+
+// Replace the stored password hash (called after verifying the old password)
+async function updatePassword(userId, passwordHash) {
+  await db.query(
+    'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+    [passwordHash, userId]
+  );
+}
+
 module.exports = {
   findUserByEmail,
   findUserById,
@@ -73,4 +99,7 @@ module.exports = {
   getAllUsers,
   deleteUser,
   emailExists,
+  getUserPasswordHash,
+  updateUsername,
+  updatePassword,
 };

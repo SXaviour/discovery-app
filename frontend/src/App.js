@@ -10,6 +10,10 @@ import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
 import Places from './pages/Places';
 import Discover from './pages/Discover';
+import PlaceDetail from './pages/PlaceDetail';
+import Saved from './pages/Saved';
+import Profile from './pages/Profile';
+import SettingsPage from './pages/Settings';
 
 function App() {
   return (
@@ -24,6 +28,10 @@ function App() {
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/places" element={<Places />} />
           <Route path="/discover" element={<Discover />} />
+          <Route path="/places/:id" element={<PlaceDetail />} />
+          <Route path="/saved" element={<Saved />} />
+          <Route path="/profile"   element={<Profile />} />
+          <Route path="/settings" element={<SettingsPage />} />
 
           {/* Any URL that doesn't match the ones above gets sent back to home */}
           <Route path="*" element={<Navigate to="/" replace />} />

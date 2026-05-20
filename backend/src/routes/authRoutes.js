@@ -1,17 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, logout, getMe } = require('../controllers/authControllers');
+const { register, login, logout, getMe, updateMe, changePassword, deleteMe } = require('../controllers/authControllers');
+const { requireAuth } = require('../middleware/authMiddleware');
 
-// POST /api/auth/register  — create a new account
 router.post('/register', register);
+router.post('/login',    login);
+router.post('/logout',   logout);
+router.get('/me',        getMe);
 
-// POST /api/auth/login     — log in and start a session
-router.post('/login', login);
-
-// POST /api/auth/logout    — end the session
-router.post('/logout', logout);
-
-// GET  /api/auth/me        — get the currently logged-in user
-router.get('/me', getMe);
+// Settings endpoints — all require authentication
+router.patch('/me',             requireAuth, updateMe);
+router.post('/change-password', requireAuth, changePassword);
+router.delete('/me',            requireAuth, deleteMe);
 
 module.exports = router;

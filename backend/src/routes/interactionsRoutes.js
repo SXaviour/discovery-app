@@ -13,6 +13,7 @@ const {
   getMyFavorites,
   getMyVisited,
   getPlaceInteractions,
+  clearMyInteractions,
 } = require('../controllers/interactionsControllers');
 
 // Apply requireAuth to every route in this file
@@ -26,5 +27,6 @@ router.get('/my',                    getMyInteractions);
 router.get('/my/favorites',          getMyFavorites);
 router.get('/my/visited',            getMyVisited);
 router.get('/place/:placeId',        getPlaceInteractions);
+router.delete('/my',                 clearMyInteractions);
 
 module.exports = router;

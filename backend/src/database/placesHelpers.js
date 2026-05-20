@@ -2,37 +2,50 @@
 
 const db = require('../config/database');
 
-// Get all places, with optional filters for city, category, price level, and review count range
-async function getPlaces({ city, category, price_level, min_review_count, max_review_count, min_rating, limit = 50, offset = 0 } = {}) {
+// Get all places with optional filters. Supports multi-value category/price arrays,
+// tag overlap filtering, and text search. Returns { places, total } for pagination.
+async function getPlaces({
+  city, categories, price_levels, min_rating, tags, search,
+  // backward-compat single-value aliases still accepted
+  category, price_level,
+  limit = 20, offset = 0, random = false,
+} = {}) {
   const conditions = ['is_closed = false'];
   const values = [];
   let i = 1;
 
-  if (city)              { conditions.push(`city = $${i++}`);                values.push(city); }
-  if (category)          { conditions.push(`category = $${i++}`);            values.push(category); }
-  if (price_level)       { conditions.push(`price_level = $${i++}`);         values.push(price_level); }
-  if (min_review_count != null) { conditions.push(`google_review_count >= $${i++}`); values.push(min_review_count); }
-  if (max_review_count != null) { conditions.push(`google_review_count < $${i++}`);  values.push(max_review_count); }
-  if (min_rating != null)       { conditions.push(`google_rating >= $${i++}`);       values.push(min_rating); }
+  // Merge singular legacy params into their array equivalents
+  const cats   = categories  || (category    ? [category]    : null);
+  const prices = price_levels || (price_level ? [price_level] : null);
 
-  // When fetching hidden gems (by review count range), sort by rating so best ones come first
-  const orderBy = (min_review_count != null || max_review_count != null)
-    ? 'google_rating DESC NULLS LAST'
-    : 'google_review_count DESC NULLS LAST';
+  if (city)                     { conditions.push(`city = $${i++}`);                  values.push(city); }
+  if (cats?.length)             { conditions.push(`category = ANY($${i++}::text[])`); values.push(cats); }
+  if (prices?.length)           { conditions.push(`price_level = ANY($${i++}::int[])`); values.push(prices.map(Number)); }
+  if (min_rating != null)       { conditions.push(`google_rating >= $${i++}`);         values.push(min_rating); }
+  if (tags?.length)             { conditions.push(`tags && $${i++}::text[]`);          values.push(tags); }
+  if (search) {
+    const p = `$${i++}`;
+    conditions.push(`(name ILIKE ${p} OR description ILIKE ${p} OR EXISTS (SELECT 1 FROM unnest(tags) t WHERE t ILIKE ${p}))`);
+    values.push(`%${search}%`);
+  }
 
   values.push(limit, offset);
 
   const result = await db.query(`
     SELECT id, name, city, category, subcategory, tags, address,
            latitude, longitude, google_rating, google_review_count,
-           average_rating, total_ratings, price_level, image_url, description
+           average_rating, total_ratings, price_level, image_url, description,
+           COUNT(*) OVER() AS total_count
     FROM places
     WHERE ${conditions.join(' AND ')}
-    ORDER BY ${orderBy}
+    ORDER BY ${random ? 'RANDOM()' : 'google_review_count DESC NULLS LAST'}
     LIMIT $${i++} OFFSET $${i++}
   `, values);
 
-  return result.rows;
+  return {
+    places: result.rows,
+    total:  parseInt(result.rows[0]?.total_count || 0),
+  };
 }
 
 // Get a single place by its ID, including all details

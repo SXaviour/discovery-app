@@ -7,6 +7,7 @@ const {
   getUserInteractions,
   getUserInteractionsByType,
   getUserPlaceInteractions,
+  clearUserInteractions,
 } = require('../database/interactionsHelpers');
 
 // POST /api/interactions/rate
@@ -164,6 +165,18 @@ async function getMyVisited(req, res) {
   }
 }
 
+// DELETE /api/interactions/my
+// Clears all ratings, favorites, and visited records for the logged-in user
+async function clearMyInteractions(req, res) {
+  try {
+    await clearUserInteractions(req.session.userId);
+    res.json({ success: true, message: 'Taste profile reset' });
+  } catch (error) {
+    console.error('clearMyInteractions error:', error);
+    res.status(500).json({ success: false, error: 'Failed to reset taste profile' });
+  }
+}
+
 module.exports = {
   ratePlace,
   removeRating,
@@ -173,4 +186,5 @@ module.exports = {
   getMyFavorites,
   getMyVisited,
   getPlaceInteractions,
+  clearMyInteractions,
 };

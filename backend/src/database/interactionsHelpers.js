@@ -121,7 +121,8 @@ async function getUserInteractionsByType(userId, type) {
     SELECT
       ui.id, ui.interaction_type, ui.created_at,
       p.id as place_id, p.name, p.city, p.category, p.subcategory,
-      p.address, p.image_url, p.average_rating, p.google_rating, p.price_level
+      p.address, p.image_url, p.average_rating, p.google_rating,
+      p.google_review_count, p.price_level, p.tags
     FROM user_interactions ui
     JOIN places p ON ui.place_id = p.id
     WHERE ui.user_id = $1 AND ui.interaction_type = $2
@@ -141,6 +142,14 @@ async function getUserPlaceInteractions(userId, placeId) {
   return result.rows;
 }
 
+// Delete all interactions for a user — used by the "Reset taste profile" setting
+async function clearUserInteractions(userId) {
+  await db.query(
+    'DELETE FROM user_interactions WHERE user_id = $1',
+    [userId]
+  );
+}
+
 module.exports = {
   upsertRating,
   deleteRating,
@@ -148,4 +157,5 @@ module.exports = {
   getUserInteractions,
   getUserInteractionsByType,
   getUserPlaceInteractions,
+  clearUserInteractions,
 };

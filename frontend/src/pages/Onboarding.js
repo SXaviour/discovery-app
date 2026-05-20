@@ -1,6 +1,6 @@
 // First-time setup screen shown after registration to store the user's initial preferences
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Zap, Home, TreePine, Sparkles, Trophy } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -30,6 +30,17 @@ export default function Onboarding() {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedInterests, setSelectedInterests]   = useState([]);
   const [saving, setSaving]                         = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    api.get('/preferences')
+      .then(res => {
+        const p = res.data.preferences;
+        if (p.preferred_categories?.length)  setSelectedCategories(p.preferred_categories);
+        if (p.interests?.length)             setSelectedInterests(p.interests);
+      })
+      .catch(() => {});
+  }, [user]);
 
   if (!user) return <Navigate to="/login" replace />;
 

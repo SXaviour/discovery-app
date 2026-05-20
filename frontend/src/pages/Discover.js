@@ -1,34 +1,97 @@
 // Combined discovery feed — AI-powered sections, mood filters, and place browser in one page
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Search, MapPin, Heart, Star, SlidersHorizontal, X, LogOut, User, ChevronDown, Compass, Bookmark, Settings, Sparkles, Gamepad2, Mountain, Zap, Gift, Trophy, ChevronLeft, ChevronRight, Leaf, Palette, Users, ArrowRight } from 'lucide-react';
 import campfireImg from '../assets/images/campfire.png';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import PlaceDetail from './PlaceDetail';
 import './Discover.css';
 
 const VIBES = [
-  { label: 'Adrenaline',       sub: 'Get your heart racing', Icon: Zap,      color: '#f59e0b', cat: 'adventure'         },
-  { label: 'Chill',            sub: 'Relax & unwind',        Icon: Leaf,     color: '#290fa1', cat: 'indoor_activity'   },
-  { label: 'Creative',         sub: 'Make something',        Icon: Palette,  color: '#ec4899', cat: 'unique_experience' },
-  { label: 'Fun with friends', sub: 'Group activities',      Icon: Users,    color: '#60a5fa', cat: 'adventure'         },
-  { label: 'Outdoor',          sub: 'Get in nature',         Icon: Mountain, color: '#22c55e', cat: 'outdoor_activity'  },
-  { label: 'Unique',           sub: 'One of a kind',         Icon: Sparkles, color: '#a855f7', cat: 'unique_experience' },
+  {
+    label: 'Adrenaline', sub: 'Get your heart racing', Icon: Zap, color: '#f59e0b',
+    tags: ['high energy', 'axe throwing', 'paintball', 'obstacle course', 'go karting', 'racing', 'archery', 'climbing', 'ziplining', 'ninja warrior', 'rage room', 'smash room', 'trampoline', 'coasteering'],
+  },
+  {
+    label: 'Chill', sub: 'Relax & unwind', Icon: Leaf, color: '#290fa1',
+    tags: ['chill', 'board games', 'cinema', 'comedy', 'float tank', 'sound bath', 'yoga', 'pottery', 'art jamming', 'wellness', 'spa', 'sauna'],
+  },
+  {
+    label: 'Creative', sub: 'Make something', Icon: Palette, color: '#ec4899',
+    tags: ['pottery', 'craft experience', 'paint & sip', 'art jamming', 'cocktail masterclass', 'cooking class', 'chocolate making'],
+  },
+  {
+    label: 'Fun with friends', sub: 'Get the whole crew together', Icon: Users, color: '#60a5fa',
+    tags: ['group activity', 'laser tag', 'bowling', 'karaoke', 'paintball', 'escape room', 'trampoline', 'axe throwing', 'go karting', 'racing', 'archery', 'VR gaming', 'arcade'],
+  },
+  {
+    label: 'Outdoor', sub: 'Get in nature', Icon: Mountain, color: '#22c55e',
+    tags: ['hiking', 'kayaking', 'cycling', 'coastal walk', 'paddleboarding', 'wild swimming', 'outdoor', 'scenic routes', 'surfing', 'horse riding', 'water sports', 'cold plunge'],
+  },
+  {
+    label: 'Unique', sub: 'One of a kind', Icon: Sparkles, color: '#a855f7',
+    tags: ['immersive', 'immersive theatre', 'float tank', 'sensory deprivation', 'speakeasy', 'hidden venue', 'photo booth', 'interactive museum', 'sound bath', 'rage room', 'story-based'],
+  },
 ];
 
 const COLLECTIONS = [
-  { label: 'Rainy Day Activities', sub: 'Best ways to beat the rain indoors',   ideas: 12, cat: 'indoor_activity',   bg: 'https://images.unsplash.com/photo-1511882150382-421056c89033?w=800&q=80' },
-  { label: 'Date Night Ideas',     sub: 'Romantic experiences for two',         ideas: 8,  cat: 'unique_experience', bg: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80' },
-  { label: 'Free Things to Do',    sub: 'Great experiences that cost nothing',  ideas: 15, cat: 'outdoor_activity',  bg: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80' },
-  { label: 'Group Activities',     sub: 'Get the whole crew together',          ideas: 10, cat: 'adventure',         bg: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80' },
-  { label: 'Birthday Ideas',       sub: 'Make it a day to remember',            ideas: 9,  cat: 'adventure',         bg: 'https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=800&q=80' },
-  { label: 'Adrenaline Rush',      sub: 'For those who live on the edge',       ideas: 7,  cat: 'adventure',         bg: 'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&q=80' },
-  { label: 'Competitive Fun',      sub: 'May the best person win',              ideas: 8,  cat: 'sports_fitness',    bg: 'https://images.unsplash.com/photo-1545809074-59472b3f5ecc?w=800&q=80' },
-  { label: 'Creative Experiences', sub: 'Make something with your hands',       ideas: 6,  cat: 'unique_experience', bg: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80' },
-  { label: 'Open Late',            sub: 'Still going after midnight',           ideas: 10, cat: 'indoor_activity',   bg: 'https://images.unsplash.com/photo-1514565131-fce0801e6785?w=800&q=80' },
-  { label: 'Sunset Spots',         sub: 'Golden hour views worth chasing',      ideas: 6,  cat: 'outdoor_activity',  bg: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80' },
-  { label: 'Hidden Gems',          sub: 'Highly rated · Rarely crowded',        ideas: 11, cat: 'unique_experience', bg: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80' },
+  {
+    label: 'Rainy Day Activities', sub: 'Best ways to beat the rain indoors', ideas: 12,
+    bg: 'https://images.unsplash.com/photo-1511882150382-421056c89033?w=800&q=80',
+    tags: ['escape room', 'VR gaming', 'bowling', 'laser tag', 'arcade', 'retro arcade', 'karaoke', 'board games', 'cinema', 'immersive', 'pottery', 'paint & sip', 'comedy', 'darts', 'trampoline', 'table tennis', 'pool billiards', 'mini golf', 'climbing'],
+  },
+  {
+    label: 'Date Night Ideas', sub: 'Romantic experiences for two', ideas: 8,
+    bg: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80',
+    tags: ['date night', 'pottery', 'paint & sip', 'cocktail masterclass', 'cooking class', 'escape room', 'axe throwing', 'bowling', 'cinema', 'comedy', 'archery', 'padel', 'kayaking', 'chocolate making'],
+  },
+  {
+    label: 'Free Things to Do', sub: 'Great experiences that cost nothing', ideas: 15,
+    bg: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80',
+    tags: ['hiking', 'coastal walk', 'scenic routes', 'outdoor', 'wild swimming', 'cycling', 'park', 'picnic spot', 'nature', 'green space', 'group hangout'],
+  },
+  {
+    label: 'Group Activities', sub: 'Get the whole crew together', ideas: 10,
+    bg: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80',
+    tags: ['group activity', 'laser tag', 'bowling', 'karaoke', 'paintball', 'escape room', 'trampoline', 'axe throwing', 'go karting', 'archery', 'VR gaming', 'arcade', 'racing'],
+  },
+  {
+    label: 'Birthday Ideas', sub: 'Make it a day to remember', ideas: 9,
+    bg: 'https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=800&q=80',
+    tags: ['birthday activity', 'trampoline', 'laser tag', 'bowling', 'go karting', 'karaoke', 'axe throwing', 'escape room', 'VR gaming', 'paintball', 'archery', 'rage room', 'comedy'],
+  },
+  {
+    label: 'Adrenaline Rush', sub: 'For those who live on the edge', ideas: 7,
+    bg: 'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&q=80',
+    tags: ['high energy', 'axe throwing', 'paintball', 'obstacle course', 'go karting', 'racing', 'archery', 'climbing', 'ziplining', 'ninja warrior', 'rage room', 'smash room', 'trampoline', 'coasteering'],
+  },
+  {
+    label: 'Competitive Fun', sub: 'May the best person win', ideas: 8,
+    bg: 'https://images.unsplash.com/photo-1545809074-59472b3f5ecc?w=800&q=80',
+    tags: ['padel', 'tennis', 'football', 'soccer', 'badminton', 'archery', 'axe throwing', 'darts', 'laser tag', 'paintball', 'table tennis', 'bowling', 'golf', 'driving range', 'bouldering', 'basketball', 'pool billiards'],
+  },
+  {
+    label: 'Creative Experiences', sub: 'Make something with your hands', ideas: 6,
+    bg: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80',
+    tags: ['pottery', 'craft experience', 'paint & sip', 'art jamming', 'cocktail masterclass', 'cooking class', 'chocolate making'],
+  },
+  {
+    label: 'Open Late', sub: 'Still going after dark', ideas: 10,
+    bg: 'https://images.unsplash.com/photo-1514565131-fce0801e6785?w=800&q=80',
+    filter: 'open_late',
+  },
+  {
+    label: 'Sunset Spots', sub: 'Golden hour views worth chasing', ideas: 6,
+    bg: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80',
+    tags: ['scenic routes', 'coastal walk', 'hiking', 'outdoor', 'nature', 'wild swimming', 'surfing', 'horse riding', 'park', 'picnic spot'],
+  },
+  {
+    label: 'Hidden Gems', sub: 'Highly rated · Rarely crowded', ideas: 11,
+    bg: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80',
+    tags: ['speakeasy', 'hidden venue', 'float tank', 'sound bath', 'wild swimming', 'coasteering', 'pottery', 'art jamming', 'chocolate making', 'immersive theatre', 'archery'],
+  },
 ];
 
 const CATEGORIES = [
@@ -56,13 +119,6 @@ const CAT_PLURAL = {
   sports_fitness:    'sports & fitness',
 };
 
-const FALLBACKS = {
-  adventure:         'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80',
-  indoor_activity:   'https://images.unsplash.com/photo-1511882150382-421056c89033?w=800&q=80',
-  outdoor_activity:  'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=800&q=80',
-  unique_experience: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80',
-  sports_fitness:    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80',
-};
 
 const FAMILY_TAGS = [
   'bowling', 'laser tag', 'arcade', 'mini golf', 'VR gaming',
@@ -73,9 +129,68 @@ const FAMILY_TAGS = [
 
 const UNLOCK_THRESHOLD = 5;
 
-function imgFallback(cat) {
-  return FALLBACKS[cat] || FALLBACKS.unique_experience;
-}
+// Filter functions for collections that can't be expressed with tags alone
+const SPECIAL_FILTERS = {
+  open_late: p => {
+    if (!Array.isArray(p.hours)) return false;
+    return p.hours.some(desc => {
+      const closeTime = desc.split('–')[1] || '';
+      return /\b(10|11):00 PM|\b12:00 AM|\b[12]:00 AM|Open 24/i.test(closeTime);
+    });
+  },
+};
+const PAGE_SIZE = 24;
+
+const FILTER_CATEGORIES = [
+  { label: 'Adventure',        value: 'adventure'         },
+  { label: 'Indoor',           value: 'indoor_activity'   },
+  { label: 'Outdoor',          value: 'outdoor_activity'  },
+  { label: 'Unique',           value: 'unique_experience' },
+  { label: 'Sports & Fitness', value: 'sports_fitness'    },
+];
+
+const PRICE_LABELS = { 1: 'Free', 2: 'Affordable', 3: 'Mid-range', 4: 'Premium' };
+
+const OCCASION_TAGS = [
+  'group activity', 'date night', 'birthday activity',
+  'high energy', 'solo adventure', 'skill-based', 'chill', 'wellness',
+];
+
+const CATEGORY_TAGS = {
+  indoor_activity: [
+    'escape room', 'puzzle', 'laser tag', 'VR gaming', 'immersive',
+    'board games', 'karaoke', 'comedy', 'live entertainment',
+    'arcade', 'retro arcade', 'cinema', 'darts', 'social gaming',
+    'pool billiards', 'mini golf', 'table tennis', 'ping pong',
+    'bowling', 'skating', 'ice skating', 'roller skating',
+    'racing simulator', 'sim racing',
+  ],
+  outdoor_activity: [
+    'hiking', 'scenic routes', 'nature', 'kayaking', 'water sports',
+    'cycling', 'active', 'coastal walk', 'paddleboarding',
+    'wild swimming', 'cold plunge', 'outdoor', 'park',
+    'picnic spot', 'group hangout', 'green space', 'surfing', 'horse riding',
+  ],
+  unique_experience: [
+    'axe throwing', 'trampoline', 'rage room', 'smash room',
+    'immersive theatre', 'story-based', 'pottery', 'craft experience',
+    'paint & sip', 'art jamming', 'cocktail masterclass', 'cooking class',
+    'float tank', 'sensory deprivation', 'photo booth',
+    'interactive museum', 'spa', 'chocolate making', 'sauna',
+    'cold plunge', 'aquarium', 'nature', 'family friendly',
+  ],
+  adventure: [
+    'paintball', 'obstacle course', 'ninja warrior', 'inflatable park',
+    'archery', 'shooting range', 'climbing', 'coasteering',
+    'go karting', 'racing', 'ziplining', 'outdoor',
+  ],
+  sports_fitness: [
+    'padel', 'tennis', 'football', 'soccer', 'badminton',
+    'basketball', 'golf', 'driving range', 'bouldering', 'climbing',
+    'swimming', 'active', 'yoga', 'wellness',
+  ],
+};
+
 
 function fmtCount(n) {
   if (!n) return null;
@@ -94,17 +209,44 @@ export default function Discover() {
   const [cities, setCities]             = useState([]);
   const [selectedCity, setSelectedCity] = useState('Dublin');
   const [activeMood, setActiveMood]     = useState(null);
+  const [activeVibeFilter, setActiveVibeFilter] = useState(null);
   const [searchQuery, setSearchQuery]   = useState('');
   const [filterOpen, setFilterOpen]     = useState(false);
   const [menuOpen, setMenuOpen]         = useState(false);
   const [cityDropOpen, setCityDropOpen] = useState(false);
   const [loading, setLoading]           = useState(true);
+  const [selectedPlaceId, setSelectedPlaceId] = useState(null);
+
+  // Filter draft state — what the user is editing inside the modal
+  const [draftCategories, setDraftCategories] = useState([]);
+  const [draftPriceLevels, setDraftPriceLevels] = useState([]);
+  const [draftMinRating, setDraftMinRating]   = useState(null);
+  const [draftTags, setDraftTags]             = useState([]);
+
+  // Applied filter state — null means no server filter active
+  const [appliedFilters, setAppliedFilters] = useState(null);
+
+  // Server-fetched filter results
+  const [filterResults, setFilterResults]         = useState([]);
+  const [filterTotal, setFilterTotal]             = useState(0);
+  const [filterOffset, setFilterOffset]           = useState(0);
+  const [filterLoading, setFilterLoading]         = useState(false);
+  const [filterLoadingMore, setFilterLoadingMore] = useState(false);
+
+  // Server-fetched category browse (circle chips)
+  const [browseCategory, setBrowseCategory] = useState(null);
+  const [browsePage,     setBrowsePage]     = useState(0);
+  const [browseResults,  setBrowseResults]  = useState([]);
+  const [browseTotal,    setBrowseTotal]    = useState(0);
+  const [browseLoading,  setBrowseLoading]  = useState(false);
 
   const forYouRef   = useRef(null);
   const trendingRef = useRef(null);
   const familyRef       = useRef(null);
   const friendsRef      = useRef(null);
   const collectionsRef  = useRef(null);
+  const searchDebounceRef  = useRef(null);
+  const appliedFiltersRef  = useRef(null);
 
   function scroll(ref, dir) {
     if (ref.current) ref.current.scrollBy({ left: dir * 340, behavior: 'smooth' });
@@ -146,6 +288,115 @@ export default function Discover() {
     fetchData('Dublin');
   }, [fetchData, user]);
 
+  const familyPlaces = useMemo(() => {
+    const arr = [...places.filter(p => p.tags?.some(t => FAMILY_TAGS.includes(t)))];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr.slice(0, 12);
+  }, [places]);
+
+  const friendsPlaces = useMemo(() => {
+    const arr = [...places.filter(p => p.tags?.includes('group activity'))];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr.slice(0, 12);
+  }, [places]);
+
+  const activeFilterCount = useMemo(() => {
+    if (!appliedFilters) return 0;
+    return (
+      appliedFilters.categories.length +
+      appliedFilters.priceLevels.length +
+      (appliedFilters.minRating ? 1 : 0) +
+      appliedFilters.tags.length +
+      (appliedFilters.search ? 1 : 0)
+    );
+  }, [appliedFilters]);
+
+  const fetchFilterResults = useCallback(async (filters, offset = 0) => {
+    const isMore = offset > 0;
+    isMore ? setFilterLoadingMore(true) : setFilterLoading(true);
+    const params = new URLSearchParams();
+    if (selectedCity) params.set('city', selectedCity);
+    params.set('limit', 20);
+    params.set('offset', offset);
+    if (filters.categories.length)  params.set('categories',   filters.categories.join(','));
+    if (filters.priceLevels.length) params.set('price_levels', filters.priceLevels.join(','));
+    if (filters.minRating)          params.set('min_rating',   filters.minRating);
+    if (filters.tags.length)        params.set('tags',         filters.tags.join(','));
+    if (filters.search)             params.set('search',       filters.search);
+    try {
+      const res = await api.get(`/places?${params}`);
+      const { places, total } = res.data;
+      if (isMore) {
+        setFilterResults(prev => [...prev, ...places]);
+      } else {
+        setFilterResults(places);
+      }
+      setFilterTotal(total);
+      setFilterOffset(offset + places.length);
+    } catch {}
+    finally {
+      setFilterLoading(false);
+      setFilterLoadingMore(false);
+    }
+  }, [selectedCity]);
+
+  const fetchBrowseCategory = useCallback(async (category, page, city) => {
+    setBrowseLoading(true);
+    const params = new URLSearchParams();
+    if (city) params.set('city', city);
+    params.set('categories', category);
+    params.set('limit', PAGE_SIZE);
+    params.set('offset', page * PAGE_SIZE);
+    params.set('random', 'true');
+    try {
+      const res = await api.get(`/places?${params}`);
+      setBrowseResults(res.data.places || []);
+      setBrowseTotal(res.data.total || 0);
+      setBrowsePage(page);
+    } catch {}
+    finally { setBrowseLoading(false); }
+  }, []);
+
+  // Keep a ref to the latest appliedFilters so the debounce callback reads it without a stale closure
+  useEffect(() => { appliedFiltersRef.current = appliedFilters; }, [appliedFilters]);
+
+  // Fires a server query 400ms after the user stops typing
+  useEffect(() => {
+    if (!user) return;
+    clearTimeout(searchDebounceRef.current);
+
+    if (searchQuery.length < 2) {
+      const current = appliedFiltersRef.current;
+      if (current?.search) {
+        const next = { ...current, search: '' };
+        const isEmpty = !next.categories.length && !next.priceLevels.length && !next.minRating && !next.tags.length;
+        if (isEmpty) {
+          setAppliedFilters(null);
+          setFilterResults([]); setFilterTotal(0); setFilterOffset(0);
+        } else {
+          setAppliedFilters(next);
+          fetchFilterResults(next, 0);
+        }
+      }
+      return;
+    }
+
+    searchDebounceRef.current = setTimeout(() => {
+      const current = appliedFiltersRef.current;
+      const filters = current
+        ? { ...current, search: searchQuery }
+        : { categories: [], priceLevels: [], minRating: null, tags: [], search: searchQuery };
+      setAppliedFilters(filters);
+      fetchFilterResults(filters, 0);
+    }, 400);
+  }, [searchQuery, user, fetchFilterResults]);
+
   if (!user) return <Navigate to="/login" replace />;
 
   async function handleLogout() {
@@ -153,10 +404,62 @@ export default function Discover() {
     navigate('/');
   }
 
+  function openFilterModal() {
+    if (appliedFilters) {
+      setDraftCategories(appliedFilters.categories);
+      setDraftPriceLevels(appliedFilters.priceLevels);
+      setDraftMinRating(appliedFilters.minRating);
+      setDraftTags(appliedFilters.tags);
+    }
+    setFilterOpen(true);
+  }
+
+  function handleApplyFilters() {
+    const filters = {
+      categories:  draftCategories,
+      priceLevels: draftPriceLevels,
+      minRating:   draftMinRating,
+      tags:        draftTags,
+      search:      searchQuery,
+    };
+    setAppliedFilters(filters);
+    fetchFilterResults(filters, 0);
+    setFilterOpen(false);
+  }
+
+  function handleClearFilters() {
+    setAppliedFilters(null);
+    setFilterResults([]);
+    setFilterTotal(0);
+    setFilterOffset(0);
+    setDraftCategories([]);
+    setDraftPriceLevels([]);
+    setDraftMinRating(null);
+    setDraftTags([]);
+    setSearchQuery('');
+    setActiveMood(null);
+    setActiveVibeFilter(null);
+  }
+
+  function handleCategoryClick(value) {
+    if (value === null) {
+      setBrowseCategory(null);
+      setBrowseResults([]);
+      setBrowseTotal(0);
+      setBrowsePage(0);
+    } else {
+      setBrowseCategory(value);
+      setActiveMood(null);
+      fetchBrowseCategory(value, 0, selectedCity);
+    }
+  }
+
   function handleCityChange(city) {
     setSelectedCity(city);
     setCityDropOpen(false);
     fetchData(city);
+    if (appliedFilters) fetchFilterResults(appliedFilters, 0);
+    if (browseCategory) fetchBrowseCategory(browseCategory, 0, city);
   }
 
   async function toggleHeart(e, placeId) {
@@ -181,6 +484,11 @@ export default function Discover() {
     let result =
       activeMood === 'trending' ? [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)) :
       activeMood                ? places.filter(p => p.category === activeMood) :
+      activeVibeFilter            ? (
+        Array.isArray(activeVibeFilter)
+          ? places.filter(p => p.tags?.some(t => activeVibeFilter.includes(t)))
+          : places.filter(SPECIAL_FILTERS[activeVibeFilter] || (() => false))
+      ) :
       places;
 
     if (searchQuery) {
@@ -191,7 +499,6 @@ export default function Discover() {
         p.category?.toLowerCase().includes(q)
       );
     }
-
 
     return result;
   }
@@ -207,26 +514,12 @@ export default function Discover() {
   const forYouRecs       = recs.slice(0, 8);
   const mightLikeRecs    = recs.slice(8, 16);
   const trending         = [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)).slice(0, 10);
-  const familyPlaces = (() => {
-    const arr = [...places.filter(p => p.tags?.some(t => FAMILY_TAGS.includes(t)))];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr.slice(0, 12);
-  })();
 
-  const friendsPlaces = (() => {
-    const arr = [...places.filter(p => p.tags?.includes('group activity'))];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr.slice(0, 12);
-  })();
-
-  const isFiltering  = activeMood !== null || searchQuery;
+  const isServerFiltering  = appliedFilters !== null;
+  const isBrowsingCategory = !isServerFiltering && browseCategory !== null;
+  const isLocalFiltering   = !isServerFiltering && !isBrowsingCategory && (activeMood !== null || activeVibeFilter !== null || searchQuery);
   const feedPlaces   = getFilteredFeed();
+  const totalBrowsePages = Math.ceil(browseTotal / PAGE_SIZE);
   const displayName  = user.username || user.email.split('@')[0];
 
   return (
@@ -286,7 +579,7 @@ export default function Discover() {
             <input
               className="disc-search"
               type="text"
-              placeholder="Search places, vibes, cities…"
+              placeholder="Search places, activities, tags…"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
@@ -295,8 +588,9 @@ export default function Discover() {
                 <X size={14} />
               </button>
             )}
-            <button className="disc-search-filter" onClick={e => { e.stopPropagation(); setFilterOpen(true); }}>
+            <button className="disc-search-filter" onClick={e => { e.stopPropagation(); openFilterModal(); }}>
               <SlidersHorizontal size={14} />
+              {activeFilterCount > 0 && <span className="disc-filter-badge">{activeFilterCount}</span>}
             </button>
           </div>
         </div>
@@ -336,12 +630,96 @@ export default function Discover() {
 
       {filterOpen && (
         <div className="disc-modal-backdrop" onClick={() => setFilterOpen(false)}>
-          <div className="disc-modal" onClick={e => e.stopPropagation()}>
+          <div className="disc-modal disc-modal--scroll" onClick={e => e.stopPropagation()}>
+
             <div className="disc-modal-header">
-              <h3>Filter</h3>
-              <button onClick={() => setFilterOpen(false)}><X size={18} /></button>
+              <h3>
+                Filters
+                {activeFilterCount > 0 && <span className="disc-modal-badge">{activeFilterCount}</span>}
+              </h3>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {activeFilterCount > 0 && (
+                  <button className="disc-modal-clear" onClick={handleClearFilters}>Clear all</button>
+                )}
+                <button onClick={() => setFilterOpen(false)}><X size={18} /></button>
+              </div>
             </div>
-            <button className="disc-modal-apply" onClick={() => setFilterOpen(false)}>Apply</button>
+
+            <p className="disc-modal-label">Category</p>
+            <div className="disc-modal-prices">
+              {FILTER_CATEGORIES.map(({ label, value }) => (
+                <button
+                  key={value}
+                  className={`disc-modal-price-btn${draftCategories.includes(value) ? ' active' : ''}`}
+                  onClick={() => {
+                    setDraftCategories(prev => {
+                      const next = prev.includes(value) ? prev.filter(c => c !== value) : [...prev, value];
+                      // Remove category-specific tags that no longer belong; keep occasion tags
+                      const validTags = new Set([...next.flatMap(c => CATEGORY_TAGS[c] || []), ...OCCASION_TAGS]);
+                      setDraftTags(t => t.filter(tag => validTags.has(tag)));
+                      return next;
+                    });
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <p className="disc-modal-label">Occasion</p>
+            <div className="disc-modal-tags" style={{ marginBottom: 24 }}>
+              {OCCASION_TAGS.map(tag => (
+                <button
+                  key={tag}
+                  className={`disc-modal-tag-btn${draftTags.includes(tag) ? ' active' : ''}`}
+                  onClick={() => setDraftTags(prev =>
+                    prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                  )}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+
+            <p className="disc-modal-label">Price Level</p>
+            <div className="disc-modal-prices">
+              {[1, 2, 3, 4].map(l => (
+                <button
+                  key={l}
+                  className={`disc-modal-price-btn${draftPriceLevels.includes(l) ? ' active' : ''}`}
+                  onClick={() => setDraftPriceLevels(prev =>
+                    prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]
+                  )}
+                >
+                  {PRICE_LABELS[l]}
+                </button>
+              ))}
+            </div>
+
+            <p className="disc-modal-label">Tags</p>
+            {draftCategories.length === 0 ? (
+              <p className="disc-modal-tags-hint">Select a category above to see relevant tags</p>
+            ) : (
+              <div className="disc-modal-tags">
+                {[...new Set(draftCategories.flatMap(c => CATEGORY_TAGS[c] || []))]
+                  .filter(tag => !OCCASION_TAGS.includes(tag))
+                  .map(tag => (
+                    <button
+                      key={tag}
+                      className={`disc-modal-tag-btn${draftTags.includes(tag) ? ' active' : ''}`}
+                      onClick={() => setDraftTags(prev =>
+                        prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                      )}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+              </div>
+            )}
+
+            <button className="disc-modal-apply" onClick={handleApplyFilters}>
+              Apply Filters
+            </button>
           </div>
         </div>
       )}
@@ -350,12 +728,12 @@ export default function Discover() {
 
         <div className="disc-cat-circles">
           {CATEGORIES.map(({ label, value, Icon, color }) => {
-            const isActive = activeMood === value;
+            const isActive = value === null ? (!isServerFiltering && browseCategory === null && !isLocalFiltering) : browseCategory === value;
             return (
               <button
                 key={label}
                 className={`disc-cat-circle-btn${isActive ? ' active' : ''}`}
-                onClick={() => setActiveMood(value)}
+                onClick={() => handleCategoryClick(value)}
               >
                 <div className="disc-cat-circle-icon" style={isActive ? { borderColor: color } : {}}>
                   <Icon size={26} color={color} />
@@ -371,19 +749,158 @@ export default function Discover() {
             <div className="disc-skel-row">{[1,2,3].map(n => <div key={n} className="disc-skel-hero-card" />)}</div>
             <div className="disc-skel-grid">{[1,2,3,4].map(n => <div key={n} className="disc-skel-card" />)}</div>
           </div>
-        ) : isFiltering ? (
+        ) : isServerFiltering ? (
+          <>
+            {/* Active filter chips */}
+            <div className="disc-filter-chips">
+              {appliedFilters.categories.map(c => (
+                <span key={c} className="disc-filter-chip">
+                  {FILTER_CATEGORIES.find(f => f.value === c)?.label || c}
+                  <button onClick={() => {
+                    const next = { ...appliedFilters, categories: appliedFilters.categories.filter(x => x !== c) };
+                    const isEmpty = next.categories.length === 0 && next.priceLevels.length === 0 && !next.minRating && next.tags.length === 0 && !next.search;
+                    if (isEmpty) { handleClearFilters(); } else { setAppliedFilters(next); fetchFilterResults(next, 0); }
+                  }}><X size={10} /></button>
+                </span>
+              ))}
+              {appliedFilters.priceLevels.map(l => (
+                <span key={l} className="disc-filter-chip">
+                  {PRICE_LABELS[l]}
+                  <button onClick={() => {
+                    const next = { ...appliedFilters, priceLevels: appliedFilters.priceLevels.filter(x => x !== l) };
+                    const isEmpty = next.categories.length === 0 && next.priceLevels.length === 0 && !next.minRating && next.tags.length === 0 && !next.search;
+                    if (isEmpty) { handleClearFilters(); } else { setAppliedFilters(next); fetchFilterResults(next, 0); }
+                  }}><X size={10} /></button>
+                </span>
+              ))}
+              {appliedFilters.minRating && (
+                <span className="disc-filter-chip">
+                  {appliedFilters.minRating}+ stars
+                  <button onClick={() => {
+                    const next = { ...appliedFilters, minRating: null };
+                    const isEmpty = next.categories.length === 0 && next.priceLevels.length === 0 && !next.minRating && next.tags.length === 0 && !next.search;
+                    if (isEmpty) { handleClearFilters(); } else { setAppliedFilters(next); fetchFilterResults(next, 0); }
+                  }}><X size={10} /></button>
+                </span>
+              )}
+              {appliedFilters.tags.map(t => (
+                <span key={t} className="disc-filter-chip">
+                  {t}
+                  <button onClick={() => {
+                    const next = { ...appliedFilters, tags: appliedFilters.tags.filter(x => x !== t) };
+                    const isEmpty = next.categories.length === 0 && next.priceLevels.length === 0 && !next.minRating && next.tags.length === 0 && !next.search;
+                    if (isEmpty) { handleClearFilters(); } else { setAppliedFilters(next); fetchFilterResults(next, 0); }
+                  }}><X size={10} /></button>
+                </span>
+              ))}
+              {appliedFilters.search && (
+                <span className="disc-filter-chip">
+                  "{appliedFilters.search}"
+                  <button onClick={() => {
+                    const next = { ...appliedFilters, search: '' };
+                    setSearchQuery('');
+                    const isEmpty = next.categories.length === 0 && next.priceLevels.length === 0 && !next.minRating && next.tags.length === 0 && !next.search;
+                    if (isEmpty) { handleClearFilters(); } else { setAppliedFilters(next); fetchFilterResults(next, 0); }
+                  }}><X size={10} /></button>
+                </span>
+              )}
+              <button className="disc-filter-chip disc-filter-chip--clear" onClick={handleClearFilters}>
+                Clear all
+              </button>
+            </div>
+
+            <p className="disc-results-count">
+              {filterTotal} {filterTotal === 1 ? 'place' : 'places'} found
+            </p>
+
+            {filterLoading ? (
+              <div className="disc-skel-grid">{[1,2,3,4].map(n => <div key={n} className="disc-skel-card" />)}</div>
+            ) : filterResults.length === 0 ? (
+              <div className="disc-empty">
+                <p>Nothing matches these filters.</p>
+                <button className="disc-empty-btn" onClick={handleClearFilters}>Clear filters</button>
+              </div>
+            ) : (
+              <>
+                <div className="disc-feed-grid">
+                  {filterResults.map(place => (
+                    <FeedCard key={place.id} place={place} favorited={favorites.has(place.id)}
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
+                  ))}
+                </div>
+                {filterOffset < filterTotal && (
+                  <div className="disc-load-more-wrap">
+                    <button
+                      className="disc-load-more-btn"
+                      disabled={filterLoadingMore}
+                      onClick={() => fetchFilterResults(appliedFilters, filterOffset)}
+                    >
+                      {filterLoadingMore ? 'Loading…' : `Load more (${filterTotal - filterOffset} remaining)`}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        ) : isBrowsingCategory ? (
+          <>
+            <div className="disc-browse-header">
+              <h2 className="disc-browse-title">
+                {CATEGORIES.find(c => c.value === browseCategory)?.label || browseCategory}
+              </h2>
+              {!browseLoading && <span className="disc-browse-count">{browseTotal} places</span>}
+            </div>
+
+            {browseLoading ? (
+              <div className="disc-skel-grid">{[1,2,3,4,5,6].map(n => <div key={n} className="disc-skel-card" />)}</div>
+            ) : browseResults.length === 0 ? (
+              <div className="disc-empty">
+                <p>No places found in this category.</p>
+                <button className="disc-empty-btn" onClick={() => handleCategoryClick(null)}>Back to feed</button>
+              </div>
+            ) : (
+              <>
+                <div className="disc-feed-grid">
+                  {browseResults.map(place => (
+                    <FeedCard key={place.id} place={place} favorited={favorites.has(place.id)}
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
+                  ))}
+                </div>
+                {totalBrowsePages > 1 && (
+                  <div className="disc-pagination">
+                    <button
+                      className="disc-pagination-btn"
+                      disabled={browsePage === 0}
+                      onClick={() => fetchBrowseCategory(browseCategory, browsePage - 1, selectedCity)}
+                    >
+                      ← Previous
+                    </button>
+                    <span className="disc-pagination-info">Page {browsePage + 1} of {totalBrowsePages}</span>
+                    <button
+                      className="disc-pagination-btn"
+                      disabled={browsePage + 1 >= totalBrowsePages}
+                      onClick={() => fetchBrowseCategory(browseCategory, browsePage + 1, selectedCity)}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        ) : isLocalFiltering ? (
           <>
             <p className="disc-results-count">{feedPlaces.length} places found</p>
             {feedPlaces.length === 0 ? (
               <div className="disc-empty">
                 <p>Nothing matches this filter.</p>
-                <button className="disc-empty-btn" onClick={() => { setActiveMood(null); setSearchQuery(''); }}>Clear filters</button>
+                <button className="disc-empty-btn" onClick={() => { setActiveMood(null); setActiveVibeFilter(null); setSearchQuery(''); }}>Clear filters</button>
               </div>
             ) : (
               <div className="disc-feed-grid">
                 {feedPlaces.map(place => (
                   <FeedCard key={place.id} place={place} favorited={favorites.has(place.id)}
-                    onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
+                    onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
                 ))}
               </div>
             )}
@@ -405,7 +922,7 @@ export default function Discover() {
                 <div className="disc-hscroll" ref={forYouRef}>
                   {forYouRecs.map((place, i) => (
                     <PersonalizedCard key={place.id} place={place} index={i} favorited={favorites.has(place.id)}
-                      onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
                   ))}
                 </div>
               </section>
@@ -426,7 +943,7 @@ export default function Discover() {
                 <div className="disc-hscroll" ref={trendingRef}>
                   {trending.map((place, i) => (
                     <TrendingCard key={place.id} place={place} rank={i + 1} favorited={favorites.has(place.id)}
-                      onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
                   ))}
                 </div>
               </section>
@@ -436,7 +953,7 @@ export default function Discover() {
               <section className="disc-section">
                 <div className="disc-section-action-head">
                   <div>
-                    <h2 className="disc-section-title">👨‍👩‍👧 Family Fun Time</h2>
+                    <h2 className="disc-section-title">Family Fun Time</h2>
                     <p className="disc-section-sub">Great activities for all ages</p>
                   </div>
                   <div className="disc-scroll-arrows">
@@ -447,7 +964,7 @@ export default function Discover() {
                 <div className="disc-hscroll" ref={familyRef}>
                   {familyPlaces.map(place => (
                     <SmallCard key={place.id} place={place} favorited={favorites.has(place.id)}
-                      onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
                   ))}
                 </div>
               </section>
@@ -462,8 +979,8 @@ export default function Discover() {
                 <button className="disc-see-all" onClick={() => {}}>See all <ArrowRight size={13} /></button>
               </div>
               <div className="disc-vibes-grid">
-                {VIBES.map(({ label, sub, Icon, color, cat }) => (
-                  <button key={label} className="disc-vibe-pill" onClick={() => setActiveMood(cat)}>
+                {VIBES.map(({ label, sub, Icon, color, tags }) => (
+                  <button key={label} className="disc-vibe-pill" onClick={() => { setBrowseCategory(null); setActiveMood(null); setActiveVibeFilter(tags); }}>
                     <div className="disc-vibe-icon" style={{ background: color + '22' }}>
                       <Icon size={20} color={color} />
                     </div>
@@ -480,7 +997,7 @@ export default function Discover() {
               <section className="disc-section">
                 <div className="disc-section-action-head">
                   <div>
-                    <h2 className="disc-section-title">👥 Perfect for Friends</h2>
+                    <h2 className="disc-section-title">Perfect for Friends</h2>
                     <p className="disc-section-sub">Group activities worth getting the crew together for</p>
                   </div>
                   <div className="disc-scroll-arrows">
@@ -491,7 +1008,7 @@ export default function Discover() {
                 <div className="disc-hscroll" ref={friendsRef}>
                   {friendsPlaces.map(place => (
                     <SmallCard key={place.id} place={place} favorited={favorites.has(place.id)}
-                      onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
                   ))}
                 </div>
               </section>
@@ -509,8 +1026,8 @@ export default function Discover() {
                 </div>
               </div>
               <div className="disc-hscroll" ref={collectionsRef}>
-                {COLLECTIONS.map(({ label, sub, ideas, cat, bg }) => (
-                  <button key={label} className="disc-collection-card" onClick={() => setActiveMood(cat)}
+                {COLLECTIONS.map(({ label, sub, ideas, tags, filter, bg }) => (
+                  <button key={label} className="disc-collection-card" onClick={() => { setBrowseCategory(null); setActiveMood(null); setActiveVibeFilter(filter || tags); }}
                     style={{ backgroundImage: `url(${bg})` }}>
                     <div className="disc-collection-overlay" />
                     <div className="disc-collection-text">
@@ -532,7 +1049,7 @@ export default function Discover() {
                 <div className="disc-hscroll">
                   {mightLikeRecs.map(place => (
                     <SmallCard key={place.id} place={place} favorited={favorites.has(place.id)}
-                      onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
                   ))}
                 </div>
               </section>
@@ -547,7 +1064,7 @@ export default function Discover() {
                 <div className="disc-hscroll">
                   {becausePlaces.map(place => (
                     <SmallCard key={place.id} place={place} favorited={favorites.has(place.id)}
-                      onHeart={e => toggleHeart(e, place.id)} onClick={() => navigate(`/places/${place.id}`)} />
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
                   ))}
                 </div>
               </section>
@@ -558,6 +1075,15 @@ export default function Discover() {
 
       </div>
     </div>
+
+    {selectedPlaceId && (
+      <div className="disc-place-modal-backdrop" onClick={() => setSelectedPlaceId(null)}>
+        <div className="disc-place-modal" onClick={e => e.stopPropagation()}>
+          <PlaceDetail modalId={selectedPlaceId} onClose={() => setSelectedPlaceId(null)} />
+        </div>
+      </div>
+    )}
+
     </div>
   );
 }
@@ -574,8 +1100,7 @@ function PersonalizedCard({ place, index, favorited, onHeart, onClick }) {
   const tags = PERSONAL_TAGS.filter(t => t.check(place)).slice(0, 2).map(t => t.label);
   return (
     <div className="disc-personal-card" onClick={onClick}>
-      <img src={place.image_url || imgFallback(place.category)} alt={place.name}
-        className="disc-personal-card-img" onError={e => { e.target.src = imgFallback(place.category); }} />
+      {place.image_url && <img src={place.image_url} alt={place.name} className="disc-personal-card-img" />}
       <div className="disc-personal-card-overlay" />
       <div className="disc-personal-card-tags">
         {tags.map(t => <span key={t} className="disc-personal-tag">{t}</span>)}
@@ -598,8 +1123,7 @@ function PersonalizedCard({ place, index, favorited, onHeart, onClick }) {
 function TrendingCard({ place, rank, favorited, onHeart, onClick }) {
   return (
     <div className="disc-trending-card" onClick={onClick}>
-      <img src={place.image_url || imgFallback(place.category)} alt={place.name}
-        className="disc-trending-card-img" onError={e => { e.target.src = imgFallback(place.category); }} />
+      {place.image_url && <img src={place.image_url} alt={place.name} className="disc-trending-card-img" />}
       <div className="disc-trending-card-overlay" />
       <div className="disc-trending-rank">{rank}</div>
       <button className={`disc-heart${favorited ? ' active' : ''}`} onClick={onHeart} aria-label="Toggle favourite">
@@ -619,8 +1143,7 @@ function TrendingCard({ place, rank, favorited, onHeart, onClick }) {
 function SmallCard({ place, favorited, onHeart, onClick }) {
   return (
     <div className="disc-small-card" onClick={onClick}>
-      <img src={place.image_url || imgFallback(place.category)} alt={place.name}
-        className="disc-small-card-img" onError={e => { e.target.src = imgFallback(place.category); }} />
+      {place.image_url && <img src={place.image_url} alt={place.name} className="disc-small-card-img" />}
       <div className="disc-small-card-overlay" />
       <button className={`disc-heart${favorited ? ' active' : ''}`} onClick={onHeart} aria-label="Toggle favourite">
         <Heart size={14} fill={favorited ? 'currentColor' : 'none'} />
@@ -644,8 +1167,7 @@ function FeedCard({ place, favorited, onHeart, onClick }) {
   return (
     <div className="disc-feed-card" onClick={onClick}>
       <div className="disc-feed-card-img-wrap">
-        <img src={place.image_url || imgFallback(place.category)} alt={place.name}
-          className="disc-feed-card-img" onError={e => { e.target.src = imgFallback(place.category); }} />
+        {place.image_url && <img src={place.image_url} alt={place.name} className="disc-feed-card-img" />}
         {place.category && <span className="disc-cat-badge" style={{ background: CAT_COLORS[place.category] }}>{place.category.charAt(0).toUpperCase() + place.category.slice(1)}</span>}
         <button className={`disc-heart${favorited ? ' active' : ''}`} onClick={onHeart} aria-label="Toggle favourite">
           <Heart size={14} fill={favorited ? 'currentColor' : 'none'} />

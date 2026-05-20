@@ -15,18 +15,6 @@ const CATEGORIES = [
   { label: 'Sports & Fitness',   value: 'sports_fitness' },
 ];
 
-// Fallback images from Unsplash used when a place has no image stored in the database
-const CATEGORY_FALLBACKS = {
-  adventure:         'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&q=80',
-  indoor_activity:   'https://images.unsplash.com/photo-1511882150382-421056c89033?w=400&q=80',
-  outdoor_activity:  'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=400&q=80',
-  unique_experience: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&q=80',
-  sports_fitness:    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80',
-};
-
-function placeFallback(category) {
-  return CATEGORY_FALLBACKS[category] || CATEGORY_FALLBACKS.adventure;
-}
 
 function starDisplay(rating) {
   const r     = parseFloat(rating) || 0;
@@ -222,12 +210,7 @@ export default function Home() {
                     <div key={si} className="places-slide">
                       {slide.map(place => (
                         <div key={place.id} className="place-card" onClick={() => navigate(`/places/${place.id}`)}>
-                          <img
-                            src={place.image_url || placeFallback(place.category)}
-                            alt={place.name}
-                            className="place-card-img"
-                            onError={e => { e.target.src = placeFallback(place.category); }}
-                          />
+                          {place.image_url && <img src={place.image_url} alt={place.name} className="place-card-img" />}
                           <div className="place-card-overlay" />
                           <div className="place-card-body">
                             <div className="place-card-name">{place.name}</div>
@@ -286,11 +269,7 @@ export default function Home() {
                           className="cat-tile"
                           onClick={() => navigate(`/places?category=${cat.value}`)}
                         >
-                          <img
-                            src={categoryImages[cat.value] || CATEGORY_FALLBACKS[cat.value]}
-                            alt={cat.label}
-                            onError={e => { e.target.src = CATEGORY_FALLBACKS[cat.value]; }}
-                          />
+                          {categoryImages[cat.value] && <img src={categoryImages[cat.value]} alt={cat.label} />}
                           <div className="cat-tile-overlay">
                             <span className="cat-tile-label">{cat.label}</span>
                           </div>

@@ -36,12 +36,18 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // Re-fetches the user from the server — used after profile updates like username changes
+  const refreshUser = async () => {
+    const response = await api.get('/auth/me');
+    setUser(response.data.user);
+  };
+
   // Don't show any page until we've finished checking the session
   // This stops pages from briefly showing the wrong content on load
   if (loading) return null;
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

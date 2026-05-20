@@ -38,16 +38,15 @@ async function getMyPreferences(req, res) {
 // }
 async function updateMyPreferences(req, res) {
   try {
-    const { preferred_categories, preferred_price_range, interests } = req.body;
+    const { preferred_categories, preferred_price_range, interests, default_city } = req.body;
 
-    // Validate categories if provided — must match our 7 allowed values
-    const validCategories = ['restaurant', 'bar', 'museum', 'park', 'entertainment', 'shopping', 'attraction'];
+    const validCategories = ['adventure', 'indoor_activity', 'outdoor_activity', 'unique_experience', 'sports_fitness'];
     if (preferred_categories) {
       const invalid = preferred_categories.filter(c => !validCategories.includes(c));
       if (invalid.length > 0) {
         return res.status(400).json({
           success: false,
-          error: `Invalid categories: ${invalid.join(', ')}. Must be one of: ${validCategories.join(', ')}`,
+          error: `Invalid categories: ${invalid.join(', ')}`,
         });
       }
     }
@@ -67,6 +66,7 @@ async function updateMyPreferences(req, res) {
       preferred_categories,
       preferred_price_range,
       interests,
+      default_city,
     });
 
     res.json({ success: true, preferences: updated });

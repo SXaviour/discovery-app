@@ -1,5 +1,8 @@
 const bcrypt = require('bcrypt');
-const { findUserByEmail, findUserById, createUser, updateUserLastLogin, emailExists } = require('../database/helpers');
+const {
+  findUserByEmail, findUserById, createUser, updateUserLastLogin, emailExists,
+  getUserPasswordHash, updateUsername, updatePassword, deleteUser,
+} = require('../database/helpers');
 
 
 // REGISTER 
@@ -212,4 +215,80 @@ async function getMe(req, res) {
 }
 
 
-module.exports = { register, login, logout, getMe };
+// PATCH /api/auth/me
+// Updates the logged-in user's username
+async function updateMe(req, res) {
+  try {
+    const { username } = req.body;
+    if (!username || username.trim().length === 0) {
+      return res.status(400).json({ success: false, error: 'Username cannot be empty' });
+    }
+    if (username.trim().length > 50) {
+      return res.status(400).json({ success: false, error: 'Username must be 50 characters or less' });
+    }
+    const updated = await updateUsername(req.session.userId, username.trim());
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    res.json({ success: true, user: updated });
+  } catch (error) {
+    console.error('updateMe error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update profile' });
+  }
+}
+
+// POST /api/auth/change-password
+// Verifies the current password then sets a new one
+async function changePassword(req, res) {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Current and new password are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 6 characters' });
+    }
+    const hash = await getUserPasswordHash(req.session.userId);
+    if (!hash) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    const match = await bcrypt.compare(currentPassword, hash);
+    if (!match) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect' });
+    }
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await updatePassword(req.session.userId, newHash);
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('changePassword error:', error);
+    res.status(500).json({ success: false, error: 'Failed to change password' });
+  }
+}
+
+// DELETE /api/auth/me
+// Verifies password then permanently deletes the account and all its data
+async function deleteMe(req, res) {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ success: false, error: 'Password is required to delete account' });
+    }
+    const hash = await getUserPasswordHash(req.session.userId);
+    if (!hash) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    const match = await bcrypt.compare(password, hash);
+    if (!match) {
+      return res.status(401).json({ success: false, error: 'Incorrect password' });
+    }
+    await deleteUser(req.session.userId);
+    req.session.destroy(() => {});
+    res.clearCookie('connect.sid');
+    res.json({ success: true, message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('deleteMe error:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete account' });
+  }
+}
+
+module.exports = { register, login, logout, getMe, updateMe, changePassword, deleteMe };

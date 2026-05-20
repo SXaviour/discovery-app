@@ -9,6 +9,7 @@ const placesRoutes = require('./routes/placesRoutes');
 const interactionsRoutes      = require('./routes/interactionsRoutes');
 const preferencesRoutes       = require('./routes/preferencesRoutes');
 const recommendationsRoutes   = require('./routes/recommendationsRoutes');
+const collectionsRoutes       = require('./routes/collectionsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -54,6 +55,7 @@ app.use('/api/places', placesRoutes);
 app.use('/api/interactions',    interactionsRoutes);
 app.use('/api/preferences',    preferencesRoutes);
 app.use('/api/recommendations', recommendationsRoutes);
+app.use('/api/collections',     collectionsRoutes);
 
 // Health check
 app.get('/', (_req, res) => {

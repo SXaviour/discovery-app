@@ -1,0 +1,338 @@
+/* Settings page */
+
+.st-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+}
+
+/* ── SIDEBAR ── */
+
+.st-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: #0a0a0a;
+  border-right: 1px solid #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 16px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.st-sidebar-logo {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin-bottom: 36px;
+  padding: 0 8px;
+}
+
+.st-sidebar-logo span { color: #22c55e; }
+
+.st-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.st-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.st-sidebar-item:hover { background: #111; color: #d1d5db; }
+.st-sidebar-item.active { background: #111; color: #fff; }
+
+.st-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid #1a1a1a;
+  margin-top: 8px;
+}
+
+.st-sidebar-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.st-sidebar-user-info { overflow: hidden; }
+
+.st-sidebar-user-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.st-sidebar-user-sub {
+  font-size: 0.7rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── MAIN AREA ── */
+
+.st-page {
+  flex: 1;
+  padding: 48px 40px;
+  max-width: 680px;
+}
+
+.st-page-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 32px;
+}
+
+/* ── SECTIONS ── */
+
+.st-section {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+.st-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.st-section--danger { border-color: rgba(239, 68, 68, 0.2); }
+.st-section-title--danger { color: #ef4444; }
+
+/* ── FIELDS ── */
+
+.st-field { margin-bottom: 4px; }
+
+.st-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+
+
+.st-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.st-input {
+  flex: 1;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.88rem;
+  font-family: inherit;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.st-input:focus { border-color: #7c3aed; }
+.st-input--spaced { display: block; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+
+
+.st-divider {
+  border: none;
+  border-top: 1px solid #1a1a1a;
+  margin: 22px 0;
+}
+
+/* ── BUTTONS ── */
+
+.st-btn {
+  padding: 10px 20px;
+  background: #7c3aed;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+
+.st-btn:hover:not(:disabled) { background: #6d28d9; }
+.st-btn:disabled { opacity: 0.5; cursor: default; }
+.st-btn--mt { margin-top: 4px; }
+
+/* ── STATUS MESSAGES ── */
+
+.st-status {
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+.st-status--success { color: #22c55e; }
+.st-status--error   { color: #ef4444; }
+
+
+/* ── DANGER ITEMS ── */
+
+.st-danger-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.st-danger-item:last-child { border-bottom: none; padding-bottom: 0; }
+.st-danger-item:first-child { padding-top: 0; }
+
+.st-danger-text { flex: 1; }
+
+.st-danger-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f3f4f6;
+  margin-bottom: 4px;
+}
+
+.st-danger-desc {
+  font-size: 0.78rem;
+  color: #6b7280;
+  line-height: 1.45;
+}
+
+.st-danger-btn {
+  padding: 8px 18px;
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 9px;
+  color: #ef4444;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.st-danger-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: #ef4444;
+}
+
+/* ── MODALS ── */
+
+.st-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.st-modal {
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 18px;
+  padding: 32px;
+  max-width: 420px;
+  width: 100%;
+}
+
+.st-modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.st-modal-text {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  line-height: 1.55;
+  margin-bottom: 20px;
+}
+
+.st-modal-error {
+  font-size: 0.8rem;
+  color: #ef4444;
+  margin-top: -6px;
+  margin-bottom: 12px;
+}
+
+.st-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.st-modal-cancel {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.st-modal-cancel:hover { background: #1a1a1a; }
+
+.st-modal-confirm {
+  padding: 10px 20px;
+  background: #dc2626;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.st-modal-confirm:hover:not(:disabled) { background: #b91c1c; }
+.st-modal-confirm:disabled { opacity: 0.5; cursor: default; }
