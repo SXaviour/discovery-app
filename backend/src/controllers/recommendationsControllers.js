@@ -2,6 +2,8 @@
 
 const { buildUserProfile }           = require('../ml/userProfile');
 const { getHybridRecommendations }   = require('../ml/hybridScorer');
+const { scoreSinglePlace }           = require('../ml/contentScorer');
+const { getSimilarUserPicks }        = require('../database/interactionsHelpers');
 
 // GET /api/recommendations/profile
 // Returns a breakdown of what the system has learned about this user's tastes
@@ -33,4 +35,30 @@ async function getRecommendations(req, res) {
   }
 }
 
-module.exports = { getMyProfile, getRecommendations };
+async function getPlaceScore(req, res) {
+  try {
+    const placeId = parseInt(req.params.placeId);
+    const result  = await scoreSinglePlace(req.session.userId, placeId);
+    if (!result) return res.status(404).json({ success: false });
+    res.json({ success: true, score: result.score, mode: result.mode });
+  } catch (err) {
+    console.error('getPlaceScore error:', err);
+    res.status(500).json({ success: false });
+  }
+}
+
+// GET /api/recommendations/similar?city=Dublin
+// Returns places liked by users with similar interaction history to the current user
+async function getPeopleAlsoEnjoyed(req, res) {
+  try {
+    const city  = req.query.city || null;
+    const limit = parseInt(req.query.limit) || 25;
+    const places = await getSimilarUserPicks(req.session.userId, city, limit);
+    res.json({ success: true, places });
+  } catch (err) {
+    console.error('getPeopleAlsoEnjoyed error:', err);
+    res.status(500).json({ success: false });
+  }
+}
+
+module.exports = { getMyProfile, getRecommendations, getPlaceScore, getPeopleAlsoEnjoyed };

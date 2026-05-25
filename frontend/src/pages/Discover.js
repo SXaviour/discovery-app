@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { Search, MapPin, Heart, Star, SlidersHorizontal, X, LogOut, User, ChevronDown, Compass, Bookmark, Settings, Sparkles, Gamepad2, Mountain, Zap, Gift, Trophy, ChevronLeft, ChevronRight, Leaf, Palette, Users, ArrowRight } from 'lucide-react';
+import { Search, MapPin, Heart, Star, SlidersHorizontal, X, LogOut, User, ChevronDown, Compass, Bookmark, Settings, Sparkles, Gamepad2, Mountain, Zap, Gift, Trophy, ChevronLeft, ChevronRight, Leaf, Palette, Users } from 'lucide-react';
 import campfireImg from '../assets/images/campfire.png';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import PlaceDetail from './PlaceDetail';
+import BottomNav from '../components/BottomNav';
 import './Discover.css';
 
 const VIBES = [
@@ -127,7 +128,6 @@ const FAMILY_TAGS = [
   'ninja warrior', 'go karting', 'obstacle course',
 ];
 
-const UNLOCK_THRESHOLD = 5;
 
 // Filter functions for collections that can't be expressed with tags alone
 const SPECIAL_FILTERS = {
@@ -216,6 +216,7 @@ export default function Discover() {
   const [cityDropOpen, setCityDropOpen] = useState(false);
   const [loading, setLoading]           = useState(true);
   const [selectedPlaceId, setSelectedPlaceId] = useState(null);
+  const [seedPlace, setSeedPlace]             = useState(null);
 
   // Filter draft state — what the user is editing inside the modal
   const [draftCategories, setDraftCategories] = useState([]);
@@ -224,7 +225,7 @@ export default function Discover() {
   const [draftTags, setDraftTags]             = useState([]);
 
   // Applied filter state — null means no server filter active
-  const [appliedFilters, setAppliedFilters] = useState(null);
+  const [appliedFilters, setAppliedFilters]       = useState(null);
 
   // Server-fetched filter results
   const [filterResults, setFilterResults]         = useState([]);
@@ -232,6 +233,10 @@ export default function Discover() {
   const [filterOffset, setFilterOffset]           = useState(0);
   const [filterLoading, setFilterLoading]         = useState(false);
   const [filterLoadingMore, setFilterLoadingMore] = useState(false);
+
+  const [familyPlaces,   setFamilyPlaces]   = useState([]);
+  const [friendsPlaces,  setFriendsPlaces]  = useState([]);
+  const [similarPlaces,  setSimilarPlaces]  = useState([]);
 
   // Server-fetched category browse (circle chips)
   const [browseCategory, setBrowseCategory] = useState(null);
@@ -245,6 +250,10 @@ export default function Discover() {
   const familyRef       = useRef(null);
   const friendsRef      = useRef(null);
   const collectionsRef  = useRef(null);
+  const mightLikeRef    = useRef(null);
+  const becauseRef      = useRef(null);
+  const loveCatRef      = useRef(null);
+  const similarRef      = useRef(null);
   const searchDebounceRef  = useRef(null);
   const appliedFiltersRef  = useRef(null);
 
@@ -257,7 +266,7 @@ export default function Discover() {
     try {
       const q = city ? `city=${encodeURIComponent(city)}&` : '';
       const [recsRes, placesRes] = await Promise.all([
-        api.get(`/recommendations?${q}limit=20`),
+        api.get(`/recommendations?${q}limit=50`),
         api.get(`/places?${q}limit=200`),
       ]);
       setRecs(recsRes.data.recommendations || []);
@@ -270,6 +279,18 @@ export default function Discover() {
     }
   }, []);
 
+  const fetchSectionPlaces = useCallback(async (tags, setter, city) => {
+    const params = new URLSearchParams();
+    if (city) params.set('city', city);
+    params.set('tags',   tags.join(','));
+    params.set('limit',  50);
+    params.set('random', 'true');
+    try {
+      const res = await api.get(`/places?${params}`);
+      setter(res.data.places || []);
+    } catch {}
+  }, []);
+
   useEffect(() => {
     if (!user) return;
 
@@ -278,7 +299,11 @@ export default function Discover() {
       .catch(() => {});
 
     api.get('/interactions/my/favorites')
-      .then(res => setFavorites(new Set((res.data.places || []).map(p => p.id))))
+      .then(res => {
+        const favs = res.data.places || [];
+        setFavorites(new Set(favs.map(p => p.place_id)));
+        if (favs[0]) setSeedPlace(favs[0]);
+      })
       .catch(() => {});
 
     api.get('/recommendations/profile')
@@ -286,25 +311,12 @@ export default function Discover() {
       .catch(() => {});
 
     fetchData('Dublin');
-  }, [fetchData, user]);
-
-  const familyPlaces = useMemo(() => {
-    const arr = [...places.filter(p => p.tags?.some(t => FAMILY_TAGS.includes(t)))];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr.slice(0, 12);
-  }, [places]);
-
-  const friendsPlaces = useMemo(() => {
-    const arr = [...places.filter(p => p.tags?.includes('group activity'))];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr.slice(0, 12);
-  }, [places]);
+    fetchSectionPlaces(FAMILY_TAGS,        setFamilyPlaces,  'Dublin');
+    fetchSectionPlaces(['group activity'], setFriendsPlaces, 'Dublin');
+    api.get('/recommendations/similar?city=Dublin')
+      .then(res => setSimilarPlaces(res.data.places || []))
+      .catch(() => {});
+  }, [fetchData, fetchSectionPlaces, user]);
 
   const activeFilterCount = useMemo(() => {
     if (!appliedFilters) return 0;
@@ -447,6 +459,8 @@ export default function Discover() {
       setBrowseResults([]);
       setBrowseTotal(0);
       setBrowsePage(0);
+      setActiveVibeFilter(null);
+      setActiveMood(null);
     } else {
       setBrowseCategory(value);
       setActiveMood(null);
@@ -460,6 +474,11 @@ export default function Discover() {
     fetchData(city);
     if (appliedFilters) fetchFilterResults(appliedFilters, 0);
     if (browseCategory) fetchBrowseCategory(browseCategory, 0, city);
+    fetchSectionPlaces(FAMILY_TAGS,        setFamilyPlaces,  city);
+    fetchSectionPlaces(['group activity'], setFriendsPlaces, city);
+    api.get(`/recommendations/similar${city ? `?city=${encodeURIComponent(city)}` : ''}`)
+      .then(res => setSimilarPlaces(res.data.places || []))
+      .catch(() => {});
   }
 
   async function toggleHeart(e, placeId) {
@@ -482,8 +501,10 @@ export default function Discover() {
 
   function getFilteredFeed() {
     let result =
-      activeMood === 'trending' ? [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)) :
-      activeMood                ? places.filter(p => p.category === activeMood) :
+      activeMood === 'trending'        ? [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)) :
+      activeMood                       ? places.filter(p => p.category === activeMood) :
+      activeVibeFilter === 'for_you'   ? recs :
+      activeVibeFilter === 'trending_now' ? [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)) :
       activeVibeFilter            ? (
         Array.isArray(activeVibeFilter)
           ? places.filter(p => p.tags?.some(t => activeVibeFilter.includes(t)))
@@ -504,21 +525,31 @@ export default function Discover() {
   }
 
   // Determine the user's top category for the "Because you loved X" section
-  const interactionCount = profile?.interactionCount || 0;
-  const sortedCats       = Object.entries(profile?.categoryAffinities || {}).sort((a, b) => b[1] - a[1]);
-  const topCat           = sortedCats[0]?.[0] || null;
-  // Only show the section if the user has enough interactions and a clear top preference
-  const showBecause      = interactionCount >= UNLOCK_THRESHOLD && topCat;
-  const becausePlaces    = showBecause ? places.filter(p => p.category === topCat).slice(0, 12) : [];
+  const showBecause      = seedPlace !== null;
+  const becausePlaces    = showBecause
+    ? places
+        .filter(p =>
+          p.id !== seedPlace.place_id &&
+          p.tags?.some(t => seedPlace.tags?.includes(t))
+        )
+        .slice(0, 25)
+    : [];
 
-  const forYouRecs       = recs.slice(0, 8);
-  const mightLikeRecs    = recs.slice(8, 16);
-  const trending         = [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)).slice(0, 10);
+  const sortedCats   = Object.entries(profile?.categoryAffinities || {}).sort((a, b) => b[1] - a[1]);
+  const topCat       = sortedCats[0]?.[0] || null;
+  const loveCatPlaces = (profile?.interactionCount >= 5 && topCat)
+    ? places.filter(p => p.category === topCat).slice(0, 25)
+    : [];
+
+  const forYouRecs       = recs.slice(0, 25);
+  const mightLikeRecs    = recs.slice(25, 50);
+  const trending         = [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)).slice(0, 25);
 
   const isServerFiltering  = appliedFilters !== null;
   const isBrowsingCategory = !isServerFiltering && browseCategory !== null;
   const isLocalFiltering   = !isServerFiltering && !isBrowsingCategory && (activeMood !== null || activeVibeFilter !== null || searchQuery);
   const feedPlaces   = getFilteredFeed();
+  const recScores    = activeVibeFilter === 'for_you' ? Object.fromEntries(recs.map(r => [r.id, r.score])) : null;
   const totalBrowsePages = Math.ceil(browseTotal / PAGE_SIZE);
   const displayName  = user.username || user.email.split('@')[0];
 
@@ -751,8 +782,7 @@ export default function Discover() {
           </div>
         ) : isServerFiltering ? (
           <>
-            {/* Active filter chips */}
-            <div className="disc-filter-chips">
+              <div className="disc-filter-chips">
               {appliedFilters.categories.map(c => (
                 <span key={c} className="disc-filter-chip">
                   {FILTER_CATEGORIES.find(f => f.value === c)?.label || c}
@@ -899,7 +929,7 @@ export default function Discover() {
             ) : (
               <div className="disc-feed-grid">
                 {feedPlaces.map(place => (
-                  <FeedCard key={place.id} place={place} favorited={favorites.has(place.id)}
+                  <FeedCard key={place.id} place={place} matchScore={recScores?.[place.id]} favorited={favorites.has(place.id)}
                     onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
                 ))}
               </div>
@@ -908,11 +938,14 @@ export default function Discover() {
         ) : (
           <>
             {forYouRecs.length > 0 && (
-              <section className="disc-section">
+              <section className="disc-section disc-section--ai">
                 <div className="disc-section-action-head">
                   <div>
-                    <h2 className="disc-section-title">✨Personalized for you</h2>
-                    <p className="disc-section-sub">Your top picks, ranked by the AI</p>
+                    <div className="disc-ai-header-row">
+                      <h2 className="disc-section-title">✨ Personalised for you</h2>
+                      <span className="disc-ai-badge">AI</span>
+                    </div>
+                    <p className="disc-section-sub">Your top picks, ranked by neural matching</p>
                   </div>
                   <div className="disc-scroll-arrows">
                     <button className="disc-arrow-btn" onClick={() => scroll(forYouRef, -1)}><ChevronLeft size={16} /></button>
@@ -971,12 +1004,9 @@ export default function Discover() {
             )}
 
             <section className="disc-section">
-              <div className="disc-section-action-head">
-                <div>
-                  <h2 className="disc-section-title">Explore by vibe</h2>
-                  <p className="disc-section-sub">Find something that matches your mood</p>
-                </div>
-                <button className="disc-see-all" onClick={() => {}}>See all <ArrowRight size={13} /></button>
+              <div className="disc-section-head">
+                <h2 className="disc-section-title">Explore by vibe</h2>
+                <p className="disc-section-sub">Find something that matches your mood</p>
               </div>
               <div className="disc-vibes-grid">
                 {VIBES.map(({ label, sub, Icon, color, tags }) => (
@@ -992,6 +1022,31 @@ export default function Discover() {
                 ))}
               </div>
             </section>
+
+
+            {showBecause && becausePlaces.length > 0 && (
+              <section className="disc-section" style={{ borderLeft: `3px solid ${CAT_COLORS[seedPlace.category] || '#22c55e'}`, paddingLeft: 16 }}>
+                <div className="disc-section-action-head">
+                  <div>
+                    <h2 className="disc-section-title">Because you liked {seedPlace.name}</h2>
+                    <p className="disc-section-sub" style={{ color: CAT_COLORS[seedPlace.category] || '#22c55e' }}>More like your recent favourite</p>
+                  </div>
+                  <div className="disc-scroll-arrows">
+                    <button className="disc-arrow-btn" onClick={() => scroll(becauseRef, -1)}><ChevronLeft size={16} /></button>
+                    <button className="disc-arrow-btn" onClick={() => scroll(becauseRef, 1)}><ChevronRight size={16} /></button>
+                  </div>
+                </div>
+                <div className="disc-hscroll" ref={becauseRef}>
+                  {becausePlaces.map(place => (
+                    <SmallCard key={place.id} place={place} favorited={favorites.has(place.id)}
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+
+
 
             {friendsPlaces.length > 0 && (
               <section className="disc-section">
@@ -1042,11 +1097,17 @@ export default function Discover() {
 
             {mightLikeRecs.length > 0 && (
               <section className="disc-section">
-                <div className="disc-section-head">
-                  <h2 className="disc-section-title">You Might Like These</h2>
-                  <p className="disc-section-sub">More places the model thinks you'd enjoy</p>
+                <div className="disc-section-action-head">
+                  <div>
+                    <h2 className="disc-section-title">You Might Like These</h2>
+                    <p className="disc-section-sub">More places the model thinks you'd enjoy</p>
+                  </div>
+                  <div className="disc-scroll-arrows">
+                    <button className="disc-arrow-btn" onClick={() => scroll(mightLikeRef, -1)}><ChevronLeft size={16} /></button>
+                    <button className="disc-arrow-btn" onClick={() => scroll(mightLikeRef, 1)}><ChevronRight size={16} /></button>
+                  </div>
                 </div>
-                <div className="disc-hscroll">
+                <div className="disc-hscroll" ref={mightLikeRef}>
                   {mightLikeRecs.map(place => (
                     <SmallCard key={place.id} place={place} favorited={favorites.has(place.id)}
                       onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
@@ -1055,14 +1116,46 @@ export default function Discover() {
               </section>
             )}
 
-            {showBecause && becausePlaces.length > 0 && (
-              <section className="disc-section">
-                <div className="disc-section-head">
-                  <h2 className="disc-section-title">Because you love {CAT_PLURAL[topCat] || topCat}</h2>
-                  <p className="disc-section-sub">Places that match your most visited category</p>
+            {profile && profile.interactionCount >= 5 && (
+              <section className="disc-section disc-taste-card">
+                <div className="disc-taste-header">
+                  <div>
+                    <h2 className="disc-section-title">Your Taste Profile</h2>
+                    <p className="disc-section-sub">{profile.interactionCount} interactions · AI mode active</p>
+                  </div>
+                  <span className="disc-ai-badge">AI</span>
                 </div>
-                <div className="disc-hscroll">
-                  {becausePlaces.map(place => (
+                <div className="disc-taste-bars">
+                  {Object.entries(profile.categoryAffinities || {})
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 4)
+                    .map(([cat, score]) => (
+                      <div key={cat} className="disc-taste-bar-row">
+                        <span className="disc-taste-bar-label">{CAT_PLURAL[cat] || cat}</span>
+                        <div className="disc-taste-bar-track">
+                          <div className="disc-taste-bar-fill" style={{ width: `${Math.round(score * 100)}%`, background: CAT_COLORS[cat] || '#22c55e' }} />
+                        </div>
+                        <span className="disc-taste-bar-pct">{Math.round(score * 100)}%</span>
+                      </div>
+                    ))}
+                </div>
+              </section>
+            )}
+
+            {similarPlaces.length > 0 && (
+              <section className="disc-section">
+                <div className="disc-section-action-head">
+                  <div>
+                    <h2 className="disc-section-title">People like you also enjoyed</h2>
+                    <p className="disc-section-sub">Places popular with users who share your taste</p>
+                  </div>
+                  <div className="disc-scroll-arrows">
+                    <button className="disc-arrow-btn" onClick={() => scroll(similarRef, -1)}><ChevronLeft size={16} /></button>
+                    <button className="disc-arrow-btn" onClick={() => scroll(similarRef, 1)}><ChevronRight size={16} /></button>
+                  </div>
+                </div>
+                <div className="disc-hscroll" ref={similarRef}>
+                  {similarPlaces.map(place => (
                     <SmallCard key={place.id} place={place} favorited={favorites.has(place.id)}
                       onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
                   ))}
@@ -1070,10 +1163,35 @@ export default function Discover() {
               </section>
             )}
 
+            {profile?.interactionCount >= 5 && topCat && loveCatPlaces.length > 0 && (
+              <section className="disc-section" style={{ borderLeft: `3px solid ${CAT_COLORS[topCat] || '#22c55e'}`, paddingLeft: 16 }}>
+                <div className="disc-section-action-head">
+                  <div>
+                    <h2 className="disc-section-title">Because you love {CAT_PLURAL[topCat] || topCat}</h2>
+                    <p className="disc-section-sub" style={{ color: CAT_COLORS[topCat] || '#22c55e' }}>Your most explored category</p>
+                  </div>
+                  <div className="disc-scroll-arrows">
+                    <button className="disc-arrow-btn" onClick={() => scroll(loveCatRef, -1)}><ChevronLeft size={16} /></button>
+                    <button className="disc-arrow-btn" onClick={() => scroll(loveCatRef, 1)}><ChevronRight size={16} /></button>
+                  </div>
+                </div>
+                <div className="disc-hscroll" ref={loveCatRef}>
+                  {loveCatPlaces.map(place => (
+                    <SmallCard key={place.id} place={place} favorited={favorites.has(place.id)}
+                      onHeart={e => toggleHeart(e, place.id)} onClick={() => setSelectedPlaceId(place.id)} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+
+
           </>
         )}
 
       </div>
+
+
     </div>
 
     {selectedPlaceId && (
@@ -1083,6 +1201,8 @@ export default function Discover() {
         </div>
       </div>
     )}
+
+    <BottomNav />
 
     </div>
   );
@@ -1159,16 +1279,20 @@ function SmallCard({ place, favorited, onHeart, onClick }) {
   );
 }
 
-function FeedCard({ place, favorited, onHeart, onClick }) {
+function FeedCard({ place, matchScore, favorited, onHeart, onClick }) {
   const tag = place.google_review_count > 1000 ? '🔥 Popular'
     : (parseFloat(place.google_rating) || 0) >= 4.5 ? '⭐ Top rated'
     : null;
+  const matchPct = matchScore != null ? Math.round(matchScore * 100) : null;
 
   return (
     <div className="disc-feed-card" onClick={onClick}>
       <div className="disc-feed-card-img-wrap">
         {place.image_url && <img src={place.image_url} alt={place.name} className="disc-feed-card-img" />}
-        {place.category && <span className="disc-cat-badge" style={{ background: CAT_COLORS[place.category] }}>{place.category.charAt(0).toUpperCase() + place.category.slice(1)}</span>}
+        <div className="disc-card-top-badges">
+          {place.category && <span className="disc-cat-badge" style={{ background: CAT_COLORS[place.category] }}>{place.category.charAt(0).toUpperCase() + place.category.slice(1)}</span>}
+          {matchPct != null && <span className="disc-match-score">{matchPct}% match</span>}
+        </div>
         <button className={`disc-heart${favorited ? ' active' : ''}`} onClick={onHeart} aria-label="Toggle favourite">
           <Heart size={14} fill={favorited ? 'currentColor' : 'none'} />
         </button>

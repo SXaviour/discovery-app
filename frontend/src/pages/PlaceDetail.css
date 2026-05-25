@@ -245,6 +245,17 @@
   padding: 3px 10px;
 }
 
+.pd-match-score {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(124,58,237,0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(124,58,237,0.3);
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin-left: auto;
+}
+
 .pd-desc {
   font-size: 0.9rem;
   color: #9ca3af;
@@ -585,6 +596,22 @@
 .pd-coll-add-btn:hover { background: #16a34a; }
 .pd-coll-add-btn:disabled { opacity: 0.5; cursor: default; }
 
+.pd-coll-done-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  color: #d1d5db;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pd-coll-done-btn:hover { background: #222; }
+
 .pd-card-divider {
   height: 1px;
   background: #1e1e1e;
@@ -643,4 +670,22 @@
   .pd-name {
     font-size: 1.55rem;
   }
+}
+
+.pd-coll-toast {
+  margin-top: 10px;
+  padding: 9px 12px;
+  background: rgba(22, 163, 74, 0.15);
+  border: 1px solid rgba(22, 163, 74, 0.35);
+  border-radius: 10px;
+  color: #4ade80;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  animation: pd-toast-in 0.2s ease;
+}
+
+@keyframes pd-toast-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

@@ -142,6 +142,49 @@ async function getUserPlaceInteractions(userId, placeId) {
   return result.rows;
 }
 
+// Find places liked by users with similar interaction history to the given user.
+// Only runs if the user has at least 3 interactions — below that the overlap signal is too weak.
+async function getSimilarUserPicks(userId, city = null, limit = 25) {
+  const result = await db.query(`
+    WITH my_places AS (
+      SELECT place_id FROM user_interactions
+      WHERE user_id = $1
+        AND interaction_type IN ('favorite', 'rating')
+    ),
+    similar_users AS (
+      SELECT ui.user_id, COUNT(*) AS overlap
+      FROM user_interactions ui
+      WHERE ui.place_id IN (SELECT place_id FROM my_places)
+        AND ui.user_id != $1
+        AND ui.interaction_type IN ('favorite', 'rating')
+      GROUP BY ui.user_id
+      ORDER BY overlap DESC
+      LIMIT 20
+    ),
+    their_picks AS (
+      SELECT ui.place_id, COUNT(*) AS endorsements
+      FROM user_interactions ui
+      JOIN similar_users su ON ui.user_id = su.user_id
+      WHERE ui.interaction_type IN ('favorite', 'rating')
+        AND ui.place_id NOT IN (SELECT place_id FROM my_places)
+      GROUP BY ui.place_id
+      ORDER BY endorsements DESC
+      LIMIT 100
+    )
+    SELECT
+      p.id, p.name, p.city, p.category, p.subcategory,
+      p.image_url, p.average_rating, p.google_rating,
+      p.google_review_count, p.price_level, p.tags,
+      tp.endorsements
+    FROM places p
+    JOIN their_picks tp ON p.id = tp.place_id
+    WHERE ($2::text IS NULL OR p.city = $2)
+    ORDER BY tp.endorsements DESC
+    LIMIT $3
+  `, [userId, city || null, limit]);
+  return result.rows;
+}
+
 // Delete all interactions for a user — used by the "Reset taste profile" setting
 async function clearUserInteractions(userId) {
   await db.query(
@@ -158,4 +201,5 @@ module.exports = {
   getUserInteractionsByType,
   getUserPlaceInteractions,
   clearUserInteractions,
+  getSimilarUserPicks,
 };

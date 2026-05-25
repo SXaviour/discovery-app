@@ -193,4 +193,37 @@ async function scoreAllCandidates(userId, { city } = {}) {
   };
 }
 
-module.exports = { getContentBasedRecommendations, scoreAllCandidates };
+async function scoreSinglePlace(userId, placeId) {
+  const profile = await buildUserProfile(userId);
+  const useBehavioral = profile.interactionCount >= COLD_START_THRESHOLD;
+
+  const result = await db.query(`
+    SELECT p.id, p.name, p.category, p.subcategory, p.google_rating, p.google_review_count,
+           p.average_rating, p.total_ratings, p.price_level,
+           COALESCE(fav.count, 0) AS favorite_count,
+           COALESCE(vis.count, 0) AS visited_count
+    FROM places p
+    LEFT JOIN (SELECT place_id, COUNT(*) AS count FROM user_interactions WHERE interaction_type = 'favorite' GROUP BY place_id) fav ON fav.place_id = p.id
+    LEFT JOIN (SELECT place_id, COUNT(*) AS count FROM user_interactions WHERE interaction_type = 'visited'  GROUP BY place_id) vis ON vis.place_id = p.id
+    WHERE p.id = $1
+  `, [placeId]);
+
+  if (!result.rows[0]) return null;
+  const place = result.rows[0];
+
+  let score;
+  if (useBehavioral) {
+    score = scorePlaceBehavioral(place, profile.categoryAffinities);
+  } else {
+    const prefs = await getPreferences(userId);
+    const preferredCategories = prefs?.preferred_categories || [];
+    score = scorePlaceColdStart(place, preferredCategories);
+  }
+
+  return {
+    score: parseFloat(score.toFixed(4)),
+    mode:  useBehavioral ? 'behavioral' : 'cold_start',
+  };
+}
+
+module.exports = { getContentBasedRecommendations, scoreAllCandidates, scoreSinglePlace };

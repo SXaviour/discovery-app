@@ -5,6 +5,7 @@ import campfireImg from '../assets/images/campfire.png';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import PlaceDetail from './PlaceDetail';
+import BottomNav from '../components/BottomNav';
 import './Saved.css';
 
 
@@ -36,6 +37,7 @@ export default function Saved() {
   const [createOpen, setCreateOpen]           = useState(false);
   const [newCollName, setNewCollName]         = useState('');
   const [creating, setCreating]               = useState(false);
+  const [deleteTarget, setDeleteTarget]       = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -78,8 +80,9 @@ export default function Saved() {
     finally { setCreating(false); }
   }
 
-  async function handleDelete(e, colId) {
-    e.stopPropagation();
+  async function confirmDelete() {
+    const colId = deleteTarget;
+    setDeleteTarget(null);
     try {
       await api.delete(`/collections/${colId}`);
       setCollections(prev => prev.filter(c => c.id !== colId));
@@ -248,7 +251,7 @@ export default function Saved() {
                             <span className="sv-coll-count">{col.place_count} {col.place_count === 1 ? 'place' : 'places'}</span>
                           </div>
                           <div className="sv-coll-actions">
-                            <button className="sv-coll-delete" onClick={e => handleDelete(e, col.id)}>
+                            <button className="sv-coll-delete" onClick={e => { e.stopPropagation(); setDeleteTarget(col.id); }}>
                               <Trash2 size={14} />
                             </button>
                             {expandedColl === col.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -304,6 +307,20 @@ export default function Saved() {
         </div>
       )}
 
+      {deleteTarget && (
+        <div className="sv-confirm-backdrop" onClick={() => setDeleteTarget(null)}>
+          <div className="sv-confirm" onClick={e => e.stopPropagation()}>
+            <p className="sv-confirm-title">Delete collection?</p>
+            <p className="sv-confirm-sub">This can't be undone.</p>
+            <div className="sv-confirm-actions">
+              <button className="sv-confirm-cancel" onClick={() => setDeleteTarget(null)}>Cancel</button>
+              <button className="sv-confirm-delete" onClick={confirmDelete}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <BottomNav />
     </div>
   );
 }

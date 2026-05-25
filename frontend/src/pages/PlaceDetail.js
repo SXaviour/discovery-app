@@ -51,6 +51,8 @@ export default function PlaceDetail({ modalId, onClose }) {
   const [inCollections, setInCollections]   = useState(new Set());
   const [newCollName, setNewCollName]       = useState('');
   const [collCreating, setCollCreating]     = useState(false);
+  const [toast, setToast]                   = useState(false);
+  const [matchScore, setMatchScore]         = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -69,6 +71,10 @@ export default function PlaceDetail({ modalId, onClose }) {
       } finally {
         setLoading(false);
       }
+      try {
+        const scoreRes = await api.get(`/recommendations/score/${id}`);
+        setMatchScore(Math.round(scoreRes.data.score * 100));
+      } catch {}
     }
     load();
   }, [id]);
@@ -229,6 +235,7 @@ export default function PlaceDetail({ modalId, onClose }) {
               <span className="pd-review-count">({place.google_review_count.toLocaleString()} reviews)</span>
             )}
             {rating >= 4.5 && <span className="pd-highly-rated">Highly rated</span>}
+            {matchScore !== null && <span className="pd-match-score">{matchScore}% match</span>}
           </div>
 
           {place.description && <p className="pd-desc">{place.description}</p>}
@@ -341,10 +348,14 @@ export default function PlaceDetail({ modalId, onClose }) {
                         <Plus size={14} />
                       </button>
                     </div>
+                    <button className="pd-coll-done-btn" onClick={() => { setToast(true); setCollOpen(false); setTimeout(() => setToast(false), 2500); }}>
+                      Done
+                    </button>
                   </>
                 )}
               </div>
             )}
+            {toast && <div className="pd-coll-toast">Added to collection ✓</div>}
           </div>
 
           {Array.isArray(place.hours) && place.hours.length > 0 && (() => {
@@ -385,6 +396,7 @@ export default function PlaceDetail({ modalId, onClose }) {
 
         </div>
       </div>
+
     </div>
   );
 }

@@ -336,3 +336,8 @@
 
 .st-modal-confirm:hover:not(:disabled) { background: #b91c1c; }
 .st-modal-confirm:disabled { opacity: 0.5; cursor: default; }
+
+@media (max-width: 768px) {
+  .st-sidebar { display: none; }
+  .st-page { padding: 24px 16px 80px; max-width: 100%; }
+}

@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Compass, Bookmark, User, Settings, Star, Heart, Check, LogOut, Zap, Brain } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import BottomNav from '../components/BottomNav';
 import './Profile.css';
 
 const UNLOCK_THRESHOLD = 5;
@@ -263,6 +264,7 @@ export default function Profile() {
           </div>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 }
