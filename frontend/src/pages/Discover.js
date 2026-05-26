@@ -234,9 +234,10 @@ export default function Discover() {
   const [filterLoading, setFilterLoading]         = useState(false);
   const [filterLoadingMore, setFilterLoadingMore] = useState(false);
 
-  const [familyPlaces,   setFamilyPlaces]   = useState([]);
-  const [friendsPlaces,  setFriendsPlaces]  = useState([]);
-  const [similarPlaces,  setSimilarPlaces]  = useState([]);
+  const [familyPlaces,        setFamilyPlaces]        = useState([]);
+  const [friendsPlaces,       setFriendsPlaces]       = useState([]);
+  const [similarPlaces,       setSimilarPlaces]       = useState([]);
+  const [becauseSectionPlaces, setBecauseSectionPlaces] = useState([]);
 
   // Server-fetched category browse (circle chips)
   const [browseCategory, setBrowseCategory] = useState(null);
@@ -317,6 +318,18 @@ export default function Discover() {
       .then(res => setSimilarPlaces(res.data.places || []))
       .catch(() => {});
   }, [fetchData, fetchSectionPlaces, user]);
+
+  // Re-fetch "Because you liked" whenever the seed place or city changes
+  useEffect(() => {
+    if (!seedPlace?.subcategory) { setBecauseSectionPlaces([]); return; }
+    const params = new URLSearchParams();
+    if (selectedCity) params.set('city', selectedCity);
+    params.set('subcategory', seedPlace.subcategory);
+    params.set('limit', 50);
+    api.get(`/places?${params}`)
+      .then(res => setBecauseSectionPlaces(res.data.places || []))
+      .catch(() => {});
+  }, [seedPlace, selectedCity]);
 
   const activeFilterCount = useMemo(() => {
     if (!appliedFilters) return 0;
@@ -524,14 +537,16 @@ export default function Discover() {
     return result;
   }
 
-  // Determine the user's top category for the "Because you loved X" section
-  const showBecause      = seedPlace !== null;
-  const becausePlaces    = showBecause
-    ? places
-        .filter(p =>
-          p.id !== seedPlace.place_id &&
-          p.tags?.some(t => seedPlace.tags?.includes(t))
-        )
+  // "Because you liked [place]" — server-fetched by subcategory, sorted by tag overlap
+  const showBecause   = seedPlace !== null;
+  const becausePlaces = showBecause
+    ? becauseSectionPlaces
+        .filter(p => p.id !== seedPlace.place_id)
+        .sort((a, b) => {
+          const overlapA = a.tags?.filter(t => seedPlace.tags?.includes(t)).length || 0;
+          const overlapB = b.tags?.filter(t => seedPlace.tags?.includes(t)).length || 0;
+          return overlapB - overlapA;
+        })
         .slice(0, 25)
     : [];
 

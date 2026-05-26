@@ -4,7 +4,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: row;
-  background: #fff;
+  background: #000000;
   padding: 16px;
   gap: 0;
 }
@@ -92,15 +92,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
+  background: #000000;
   padding: 36px 48px 40px;
 }
 
 .auth-logo {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 1.7rem;
-  font-weight: 700;
-  color: #1a1a2e;
+  font-weight: 500;
+  color: #fff;
   text-decoration: none;
   letter-spacing: 0.02em;
   align-self: center;
@@ -108,7 +108,7 @@
 
 .auth-logo span {
   font-family: 'Aladin', cursive;
-  color: #7c3aed;
+  color: #22c55e;
   font-weight: 400;
 }
 
@@ -121,7 +121,7 @@
 .auth-welcome {
   font-size: 2rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #fff;
   margin-bottom: 8px;
   text-align: center;
 }
@@ -162,7 +162,7 @@
 }
 
 .auth-input:focus {
-  border-color: #7c3aed;
+  border-color: #22c55e;
   background: #fff;
 }
 
@@ -184,14 +184,14 @@
 }
 
 .auth-remember input[type="checkbox"] {
-  accent-color: #7c3aed;
+  accent-color: #22c55e;
   width: 14px;
   height: 14px;
 }
 
 .auth-forgot-link {
   font-size: 0.82rem;
-  color: #7c3aed;
+  color: #22c55e;
   text-decoration: none;
   font-weight: 500;
 }
@@ -214,7 +214,7 @@
 .auth-btn {
   width: 100%;
   padding: 13px;
-  background: #7c3aed;
+  background: #22c55e;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -243,7 +243,7 @@
 }
 
 .auth-footer a {
-  color: #7c3aed;
+  color: #22c55e;
   font-weight: 700;
   text-decoration: none;
 }

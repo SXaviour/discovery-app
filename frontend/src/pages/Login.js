@@ -7,10 +7,11 @@ import heroImg from '../assets/images/loginmaps.png';
 import './Auth.css';
 
 function Login() {
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [email, setEmail]           = useState('');
+  const [password, setPassword]     = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError]           = useState('');
+  const [loading, setLoading]       = useState(false);
 
   const { login, user } = useAuth();
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ function Login() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email, password, rememberMe);
       navigate('/discover');
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong. Please try again.');
@@ -83,9 +84,9 @@ function Login() {
 
             <div className="auth-row">
               <label className="auth-remember">
-                <input type="checkbox" /> Remember me
+                <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} /> Remember me
               </label>
-              <a href="#forgot" className="auth-forgot-link">Forgot Password?</a>
+              <Link to="/forgot-password" className="auth-forgot-link">Forgot Password?</Link>
             </div>
 
             {error && <div className="auth-error">{error}</div>}

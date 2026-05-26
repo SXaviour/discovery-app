@@ -19,8 +19,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   // Auth functions — called from the login, register, and logout pages
-  const login = async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
+  const login = async (email, password, rememberMe = false) => {
+    const response = await api.post('/auth/login', { email, password, rememberMe });
     setUser(response.data.user);
     return response.data;
   };

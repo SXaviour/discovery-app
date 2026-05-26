@@ -9,7 +9,7 @@ const { getPlaces, getPlaceById, getPlaceStats } = require('../database/placesHe
 async function listPlaces(req, res) {
   try {
     const {
-      city, search, min_rating,
+      city, search, min_rating, subcategory,
       categories, price_levels, tags,
       category, price_level,  // legacy single-value aliases
       limit = 20, offset = 0, random,
@@ -18,6 +18,7 @@ async function listPlaces(req, res) {
     const { places, total } = await getPlaces({
       city,
       search,
+      subcategory,
       min_rating:   min_rating   ? parseFloat(min_rating)                   : undefined,
       categories:   categories   ? categories.split(',').map(s => s.trim())  : undefined,
       price_levels: price_levels ? price_levels.split(',').map(Number)       : undefined,

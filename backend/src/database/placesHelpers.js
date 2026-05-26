@@ -5,7 +5,7 @@ const db = require('../config/database');
 // Get all places with optional filters. Supports multi-value category/price arrays,
 // tag overlap filtering, and text search. Returns { places, total } for pagination.
 async function getPlaces({
-  city, categories, price_levels, min_rating, tags, search,
+  city, categories, price_levels, min_rating, tags, search, subcategory,
   // backward-compat single-value aliases still accepted
   category, price_level,
   limit = 20, offset = 0, random = false,
@@ -18,11 +18,12 @@ async function getPlaces({
   const cats   = categories  || (category    ? [category]    : null);
   const prices = price_levels || (price_level ? [price_level] : null);
 
-  if (city)                     { conditions.push(`city = $${i++}`);                  values.push(city); }
-  if (cats?.length)             { conditions.push(`category = ANY($${i++}::text[])`); values.push(cats); }
+  if (city)                     { conditions.push(`city = $${i++}`);                    values.push(city); }
+  if (cats?.length)             { conditions.push(`category = ANY($${i++}::text[])`);   values.push(cats); }
   if (prices?.length)           { conditions.push(`price_level = ANY($${i++}::int[])`); values.push(prices.map(Number)); }
-  if (min_rating != null)       { conditions.push(`google_rating >= $${i++}`);         values.push(min_rating); }
-  if (tags?.length)             { conditions.push(`tags && $${i++}::text[]`);          values.push(tags); }
+  if (min_rating != null)       { conditions.push(`google_rating >= $${i++}`);           values.push(min_rating); }
+  if (tags?.length)             { conditions.push(`tags && $${i++}::text[]`);            values.push(tags); }
+  if (subcategory)              { conditions.push(`subcategory = $${i++}`);              values.push(subcategory); }
   if (search) {
     const p = `$${i++}`;
     conditions.push(`(name ILIKE ${p} OR description ILIKE ${p} OR EXISTS (SELECT 1 FROM unnest(tags) t WHERE t ILIKE ${p}))`);

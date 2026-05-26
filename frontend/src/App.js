@@ -14,6 +14,8 @@ import PlaceDetail from './pages/PlaceDetail';
 import Saved from './pages/Saved';
 import Profile from './pages/Profile';
 import SettingsPage from './pages/Settings';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function App() {
   return (
@@ -31,7 +33,9 @@ function App() {
           <Route path="/places/:id" element={<PlaceDetail />} />
           <Route path="/saved" element={<Saved />} />
           <Route path="/profile"   element={<Profile />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/settings"         element={<SettingsPage />} />
+          <Route path="/forgot-password"  element={<ForgotPassword />} />
+          <Route path="/reset-password"   element={<ResetPassword />} />
 
           {/* Any URL that doesn't match the ones above gets sent back to home */}
           <Route path="*" element={<Navigate to="/" replace />} />

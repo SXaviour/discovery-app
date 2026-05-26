@@ -1,8 +1,11 @@
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const {
   findUserByEmail, findUserById, createUser, updateUserLastLogin, emailExists,
   getUserPasswordHash, updateUsername, updatePassword, deleteUser,
+  createResetToken, findValidResetToken, deleteResetToken,
 } = require('../database/helpers');
+const { sendPasswordResetEmail } = require('../utils/emailService');
 
 
 // REGISTER 
@@ -84,7 +87,7 @@ async function register(req, res) {
 
 async function login(req, res) {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     // 1. Require both fields
     if (!email || !password) {
@@ -122,6 +125,9 @@ async function login(req, res) {
     //    req.session is provided by express-session middleware
     //    This session is stored server-side; the client only gets a cookie with a session ID
     req.session.userId = user.id;
+    req.session.cookie.maxAge = rememberMe
+      ? 1000 * 60 * 60 * 24 * 30  // 30 days
+      : null;                       // session cookie — expires when browser closes
 
     res.json({
       success: true,
@@ -291,4 +297,49 @@ async function deleteMe(req, res) {
   }
 }
 
-module.exports = { register, login, logout, getMe, updateMe, changePassword, deleteMe };
+// POST /api/auth/forgot-password
+// Generates a reset token and sends a reset link to the user's email.
+// Always returns 200 so we don't reveal whether an email is registered.
+async function forgotPassword(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, error: 'Email is required' });
+
+    const user = await findUserByEmail(email);
+    if (user) {
+      const token = crypto.randomBytes(32).toString('hex');
+      await createResetToken(user.id, token);
+      const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+      await sendPasswordResetEmail(user.email, resetUrl);
+    }
+
+    res.json({ success: true, message: 'If that email is registered, a reset link is on its way.' });
+  } catch (err) {
+    console.error('forgotPassword error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+}
+
+// POST /api/auth/reset-password
+// Validates the token, sets the new password, then deletes the token.
+async function resetPassword(req, res) {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ success: false, error: 'Token and password are required' });
+    if (password.length < 6) return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+
+    const userId = await findValidResetToken(token);
+    if (!userId) return res.status(400).json({ success: false, error: 'This reset link is invalid or has expired.' });
+
+    const hash = await bcrypt.hash(password, 10);
+    await updatePassword(userId, hash);
+    await deleteResetToken(token);
+
+    res.json({ success: true, message: 'Password reset successfully. You can now log in.' });
+  } catch (err) {
+    console.error('resetPassword error:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+}
+
+module.exports = { register, login, logout, getMe, updateMe, changePassword, deleteMe, forgotPassword, resetPassword };

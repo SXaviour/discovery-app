@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, logout, getMe, updateMe, changePassword, deleteMe } = require('../controllers/authControllers');
+const { register, login, logout, getMe, updateMe, changePassword, deleteMe, forgotPassword, resetPassword } = require('../controllers/authControllers');
 const { requireAuth } = require('../middleware/authMiddleware');
 
-router.post('/register', register);
-router.post('/login',    login);
-router.post('/logout',   logout);
-router.get('/me',        getMe);
+router.post('/register',        register);
+router.post('/login',           login);
+router.post('/logout',          logout);
+router.get('/me',               getMe);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password',  resetPassword);
 
 // Settings endpoints — all require authentication
 router.patch('/me',             requireAuth, updateMe);

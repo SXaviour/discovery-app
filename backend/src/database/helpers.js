@@ -91,6 +91,31 @@ async function updatePassword(userId, passwordHash) {
   );
 }
 
+// Store a password reset token for a user, deleting any previous one first
+async function createResetToken(userId, token) {
+  await db.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
+  await db.query(
+    `INSERT INTO password_reset_tokens (user_id, token, expires_at)
+     VALUES ($1, $2, NOW() + INTERVAL '1 hour')`,
+    [userId, token]
+  );
+}
+
+// Find a valid (non-expired) reset token and return the associated user_id
+async function findValidResetToken(token) {
+  const result = await db.query(
+    `SELECT user_id FROM password_reset_tokens
+     WHERE token = $1 AND expires_at > NOW()`,
+    [token]
+  );
+  return result.rows[0]?.user_id || null;
+}
+
+// Delete a used or invalidated reset token
+async function deleteResetToken(token) {
+  await db.query('DELETE FROM password_reset_tokens WHERE token = $1', [token]);
+}
+
 module.exports = {
   findUserByEmail,
   findUserById,
@@ -102,4 +127,7 @@ module.exports = {
   getUserPasswordHash,
   updateUsername,
   updatePassword,
+  createResetToken,
+  findValidResetToken,
+  deleteResetToken,
 };
