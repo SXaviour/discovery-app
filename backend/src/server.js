@@ -17,6 +17,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const isProd = process.env.NODE_ENV === 'production';
 
+// Trust Render's load balancer so secure cookies work over HTTPS
+if (isProd) app.set('trust proxy', 1);
+
 
 // ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 
