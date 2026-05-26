@@ -267,7 +267,7 @@ export default function Discover() {
     try {
       const q = city ? `city=${encodeURIComponent(city)}&` : '';
       const [recsRes, placesRes] = await Promise.all([
-        api.get(`/recommendations?${q}limit=50`),
+        api.get(`/recommendations?${q}limit=100`),
         api.get(`/places?${q}limit=200`),
       ]);
       setRecs(recsRes.data.recommendations || []);
@@ -556,8 +556,8 @@ export default function Discover() {
     ? places.filter(p => p.category === topCat).slice(0, 25)
     : [];
 
-  const forYouRecs       = recs.slice(0, 25);
-  const mightLikeRecs    = recs.slice(25, 50);
+  const forYouRecs       = recs.slice(0, 50);
+  const mightLikeRecs    = recs.slice(50, 100);
   const trending         = [...places].sort((a, b) => (b.google_review_count || 0) - (a.google_review_count || 0)).slice(0, 25);
 
   const isServerFiltering  = appliedFilters !== null;

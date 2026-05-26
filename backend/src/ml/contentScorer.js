@@ -44,7 +44,7 @@ async function getCandidatePlaces(excludeIds, city) {
   // These are left joins so places with zero interactions still appear
   const result = await db.query(`
     SELECT
-      p.id, p.name, p.city, p.category, p.subcategory, p.address,
+      p.id, p.name, p.city, p.category, p.subcategory, p.tags, p.address,
       p.google_rating, p.google_review_count, p.average_rating, p.total_ratings,
       p.price_level, p.image_url, p.description,
       COALESCE(fav.count, 0) AS favorite_count,
@@ -107,10 +107,27 @@ function scorePlaceBehavioral(place, categoryAffinities) {
   );
 }
 
-// Score one place for a new user based on what they said they prefer
-function scorePlaceColdStart(place, preferredCategories) {
-  const inCategory    = preferredCategories.length === 0 || preferredCategories.includes(place.category);
-  const categoryScore = inCategory ? 1.0 : 0.2;
+// Score one place for a new user based on what they said they prefer.
+// Both subcategory picks (step 1) and interest tags (step 2) are equal signals —
+// matching either one gives a full 1.0 category score.
+// Only places that match nothing score 0.2.
+function scorePlaceColdStart(place, preferredCategories, interests = []) {
+  const nothingSelected = preferredCategories.length === 0 && interests.length === 0;
+  if (nothingSelected) {
+    // User skipped onboarding — treat all places equally
+    return qualityScore(place) * WEIGHTS.quality + popularityScore(place) * WEIGHTS.popularity;
+  }
+
+  const inCategory  = preferredCategories.length > 0 && (
+    preferredCategories.includes(place.subcategory) ||
+    preferredCategories.includes(place.category)
+  );
+
+  const interestSet = new Set(interests.map(i => i.toLowerCase()));
+  const hasInterest = interests.length > 0 &&
+    (place.tags || []).some(t => interestSet.has(t.toLowerCase()));
+
+  const categoryScore = (inCategory || hasInterest) ? 1.0 : 0.2;
 
   return (
     categoryScore          * WEIGHTS.category   +
@@ -139,10 +156,11 @@ async function getContentBasedRecommendations(userId, { city, limit = 20 } = {})
   } else {
     const prefs = await getPreferences(userId);
     const preferredCategories = prefs?.preferred_categories || [];
+    const interests           = prefs?.interests            || [];
 
     scored = candidates.map(place => ({
       ...place,
-      score: parseFloat(scorePlaceColdStart(place, preferredCategories).toFixed(4)),
+      score: parseFloat(scorePlaceColdStart(place, preferredCategories, interests).toFixed(4)),
     }));
   }
 
@@ -176,10 +194,11 @@ async function scoreAllCandidates(userId, { city } = {}) {
   } else {
     const prefs = await getPreferences(userId);
     const preferredCategories = prefs?.preferred_categories || [];
+    const interests           = prefs?.interests            || [];
 
     scored = candidates.map(place => ({
       ...place,
-      contentScore: parseFloat(scorePlaceColdStart(place, preferredCategories).toFixed(4)),
+      contentScore: parseFloat(scorePlaceColdStart(place, preferredCategories, interests).toFixed(4)),
     }));
   }
 

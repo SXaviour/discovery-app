@@ -58,7 +58,10 @@ async function register(req, res) {
     // 6. Save the new user to the database
     const newUser = await createUser(email, passwordHash, username || null);
 
-    // 7. Respond with the new user's info (never send the password hash back!)
+    // 7. Start a session so the user is immediately logged in after registering
+    req.session.userId = newUser.id;
+
+    // 8. Respond with the new user's info (never send the password hash back!)
     res.status(201).json({
       success: true,
       message: 'User registered successfully',

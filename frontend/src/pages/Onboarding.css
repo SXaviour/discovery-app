@@ -37,7 +37,7 @@
 
 .ob-logo span {
   font-family: 'Aladin', cursive;
-  color: #7c3aed;
+  color: #22c55e;
   font-weight: 400;
 }
 
@@ -55,12 +55,12 @@
 }
 
 .ob-dot.active {
-  background: #7c3aed;
+  background: #22c55e;
   transform: scale(1.3);
 }
 
 .ob-dot.done {
-  background: rgba(124, 58, 237, 0.45);
+  background: rgba(73, 237, 58, 0.45);
 }
 
 /* Step content area fades in when the step changes */
@@ -76,7 +76,7 @@
 .ob-step-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #7c3aed;
+  color: #22c55e;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: 10px;
@@ -128,64 +128,9 @@
 }
 
 .ob-cat-chip.selected {
-  border-color: #7c3aed;
-  background: rgba(124, 58, 237, 0.18);
+  border-color: #22c55e;
+  background: rgba(58, 237, 88, 0.18);
   color: #fff;
-}
-
-/* Price range selector */
-.ob-price-row {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.ob-price-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-  padding: 20px 8px;
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  cursor: pointer;
-  transition: border-color 0.18s, background 0.18s;
-}
-
-.ob-price-btn:hover {
-  border-color: rgba(124, 58, 237, 0.45);
-  background: rgba(124, 58, 237, 0.07);
-}
-
-.ob-price-btn.selected {
-  border-color: #7c3aed;
-  background: rgba(124, 58, 237, 0.18);
-}
-
-.ob-price-symbol {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: 0.02em;
-}
-
-.ob-price-label {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.38);
-}
-
-.ob-price-btn.selected .ob-price-label {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.ob-price-hint {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.35);
-  text-align: center;
-  margin-bottom: 36px;
 }
 
 /* Interest tags — flowing pill chips */
@@ -215,8 +160,8 @@
 }
 
 .ob-interest-chip.selected {
-  border-color: #7c3aed;
-  background: rgba(124, 58, 237, 0.18);
+  border-color: #22c55e;
+  background: rgba(58, 237, 88, 0.18);
   color: #fff;
 }
 
@@ -244,7 +189,7 @@
 
 .ob-btn-next {
   padding: 12px 30px;
-  background: #7c3aed;
+  background: #22c55e;
   color: #fff;
   border: none;
   border-radius: 999px;
@@ -290,23 +235,6 @@
     padding: 14px 8px 12px;
     font-size: 0.8rem;
     gap: 7px;
-  }
-
-  .ob-price-row {
-    gap: 8px;
-  }
-
-  .ob-price-btn {
-    padding: 16px 6px;
-    gap: 5px;
-  }
-
-  .ob-price-symbol {
-    font-size: 0.88rem;
-  }
-
-  .ob-price-label {
-    font-size: 0.7rem;
   }
 
   .ob-interest-chip {

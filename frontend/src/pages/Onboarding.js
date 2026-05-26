@@ -2,24 +2,47 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { Zap, Home, TreePine, Sparkles, Trophy } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import './Onboarding.css';
 
-const CATEGORIES = [
-  { label: 'Adventure',          value: 'adventure',         Icon: Zap },
-  { label: 'Indoor Fun',         value: 'indoor_activity',   Icon: Home },
-  { label: 'Outdoors',           value: 'outdoor_activity',  Icon: TreePine },
-  { label: 'Unique Experiences', value: 'unique_experience', Icon: Sparkles },
-  { label: 'Sports & Fitness',   value: 'sports_fitness',    Icon: Trophy },
+const SUBCATEGORIES = [
+  { label: 'Puzzle & Escape',    value: 'puzzle_challenge',      emoji: '🧩' },
+  { label: 'Games & Play',       value: 'games_play',            emoji: '🎮' },
+  { label: 'VR & Digital',       value: 'digital_immersive',     emoji: '🥽' },
+  { label: 'Karaoke & Social',   value: 'social_fun',            emoji: '🎤' },
+  { label: 'Chill & Board Games',value: 'chill_indoor',          emoji: '🛋️' },
+  { label: 'Comedy & Cinema',    value: 'entertainment_space',   emoji: '🎭' },
+  { label: 'Hiking & Exploring', value: 'movement_exploration',  emoji: '🥾' },
+  { label: 'Parks & Outdoors',   value: 'social_outdoors',       emoji: '🌿' },
+  { label: 'Water Activities',   value: 'water_based',           emoji: '🌊' },
+  { label: 'Cycling & Riding',   value: 'active_outdoors',       emoji: '🚴' },
+  { label: 'High Energy',        value: 'high_energy',           emoji: '⚡' },
+  { label: 'Immersive & Theatre',value: 'immersive_interactive',  emoji: '🎪' },
+  { label: 'Creative & Crafts',  value: 'creative_aesthetic',    emoji: '🎨' },
+  { label: 'Wellness',           value: 'wellness_recovery',     emoji: '🧘' },
+  { label: 'Skill-Based',        value: 'skill_based',           emoji: '🎯' },
+  { label: 'Sports & Fitness',   value: 'team_sports',           emoji: '🏃' },
+  { label: 'Photo & Social',     value: 'social_media_driven',   emoji: '📸' },
 ];
 
 const INTERESTS = [
-  'Escape Rooms', 'Axe Throwing', 'Kayaking', 'Climbing', 'VR Gaming',
-  'Art & Crafts', 'Wellness', 'Live Events', 'Hidden Venues', 'Date Night',
-  'Group Activities', 'Solo Adventure', 'High Energy', 'Chill Vibes',
-  'Water Sports', 'Padel',
+  // Indoor
+  'Escape Rooms', 'Laser Tag', 'Bowling', 'VR Gaming', 'Karaoke',
+  'Board Games', 'Comedy', 'Cinema', 'Arcades', 'Darts',
+  'Table Tennis', 'Skating', 'Racing Simulator',
+  // Outdoor
+  'Hiking', 'Coastal Walks', 'Kayaking', 'Paddleboarding',
+  'Wild Swimming', 'Surfing', 'Cycling', 'Horse Riding',
+  // Unique & Creative
+  'Axe Throwing', 'Trampoline', 'Rage Room', 'Go Karting',
+  'Pottery', 'Paint & Sip', 'Cocktail Making', 'Chocolate Making',
+  'Immersive Theatre', 'Float Tank', 'Sauna', 'Spa',
+  // Adventure & Sport
+  'Climbing', 'Archery', 'Paintball', 'Zipline', 'Coasteering',
+  'Padel', 'Tennis', 'Football', 'Golf', 'Bouldering',
+  // Occasions
+  'Date Night', 'Group Activity', 'Solo Adventure', 'Birthday Activity', 'High Energy', 'Chill',
 ];
 
 export default function Onboarding() {
@@ -87,17 +110,17 @@ export default function Onboarding() {
         {step === 1 && (
           <div className="ob-body" key="step1">
             <p className="ob-step-label">Step 1 of 2</p>
-            <h2 className="ob-title">What kind of places do you love?</h2>
+            <h2 className="ob-title">What kind of experiences are you into?</h2>
             <p className="ob-sub">Pick anything that interests you — we'll use this to personalise your first recommendations.</p>
 
             <div className="ob-cat-grid">
-              {CATEGORIES.map(({ label, value, Icon }) => (
+              {SUBCATEGORIES.map(({ label, value, emoji }) => (
                 <button
                   key={value}
                   className={`ob-cat-chip${selectedCategories.includes(value) ? ' selected' : ''}`}
                   onClick={() => toggleCategory(value)}
                 >
-                  <Icon size={22} strokeWidth={1.6} />
+                  <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{emoji}</span>
                   <span>{label}</span>
                 </button>
               ))}

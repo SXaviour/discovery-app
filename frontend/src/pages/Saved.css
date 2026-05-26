@@ -359,22 +359,6 @@
 
 .sv-empty-link:hover { text-decoration: underline; }
 
-.sv-cta-btn-standalone {
-  margin-top: 8px;
-  background: #22c55e;
-  color: #000;
-  font-size: 0.85rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 22px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
-}
-
-.sv-cta-btn-standalone:hover { background: #16a34a; }
-
 /* ===== COLLECTIONS ===== */
 .sv-create-btn {
   display: flex;

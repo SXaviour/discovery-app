@@ -40,7 +40,15 @@ async function updateMyPreferences(req, res) {
   try {
     const { preferred_categories, preferred_price_range, interests, default_city } = req.body;
 
-    const validCategories = ['adventure', 'indoor_activity', 'outdoor_activity', 'unique_experience', 'sports_fitness'];
+    const validCategories = [
+      // broad categories
+      'adventure', 'indoor_activity', 'outdoor_activity', 'unique_experience', 'sports_fitness',
+      // subcategories
+      'puzzle_challenge', 'games_play', 'digital_immersive', 'social_fun', 'chill_indoor',
+      'entertainment_space', 'movement_exploration', 'water_based', 'active_outdoors',
+      'social_outdoors', 'high_energy', 'immersive_interactive', 'creative_aesthetic',
+      'wellness_recovery', 'skill_based', 'team_sports', 'social_media_driven',
+    ];
     if (preferred_categories) {
       const invalid = preferred_categories.filter(c => !validCategories.includes(c));
       if (invalid.length > 0) {
