@@ -85,7 +85,7 @@ const clientBuild = path.join(__dirname, '../../frontend/build');
 app.use(express.static(clientBuild));
 
 // Any route that isn't an API call gets the React index.html so React Router works
-app.get('*', (_req, res) => {
+app.get(/.*/, (_req, res) => {
   res.sendFile(path.join(clientBuild, 'index.html'));
 });
 
