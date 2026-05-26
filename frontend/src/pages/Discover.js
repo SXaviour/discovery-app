@@ -916,7 +916,7 @@ export default function Discover() {
                     <button
                       className="disc-pagination-btn"
                       disabled={browsePage === 0}
-                      onClick={() => fetchBrowseCategory(browseCategory, browsePage - 1, selectedCity)}
+                      onClick={() => { fetchBrowseCategory(browseCategory, browsePage - 1, selectedCity); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                     >
                       ← Previous
                     </button>
@@ -924,7 +924,7 @@ export default function Discover() {
                     <button
                       className="disc-pagination-btn"
                       disabled={browsePage + 1 >= totalBrowsePages}
-                      onClick={() => fetchBrowseCategory(browseCategory, browsePage + 1, selectedCity)}
+                      onClick={() => { fetchBrowseCategory(browseCategory, browsePage + 1, selectedCity); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                     >
                       Next →
                     </button>
