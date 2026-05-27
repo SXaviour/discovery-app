@@ -556,7 +556,7 @@ export default function Discover() {
         .slice(0, 25)
     : [];
 
-  const sortedCats   = Object.entries(profile?.categoryAffinities || {}).sort((a, b) => b[1] - a[1]);
+  const sortedCats   = Object.entries(profile?.categoryCounts || {}).sort((a, b) => b[1] - a[1]);
   const topCat       = sortedCats[0]?.[0] || null;
   const loveCatPlaces = (profile?.interactionCount >= 5 && topCat)
     ? places.filter(p => p.category === topCat).slice(0, 25)

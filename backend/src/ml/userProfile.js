@@ -111,8 +111,10 @@ async function buildUserProfile(userId) {
 
   // Convert totals into averages for each category and price level
   const categoryAverages  = {};
+  const categoryCounts    = {};
   for (const [cat, data] of Object.entries(categoryScores)) {
     categoryAverages[cat] = data.total / data.count;
+    categoryCounts[cat]   = data.count;
   }
 
   const priceLevelAverages = {};
@@ -121,16 +123,10 @@ async function buildUserProfile(userId) {
   }
 
   return {
-    // Normalized 0–1 scores showing how much this user likes each category
-    categoryAffinities:  normalizeScores(categoryAverages),
-
-    // Normalized 0–1 scores showing which price levels they tend to enjoy
+    categoryAffinities:   normalizeScores(categoryAverages),
+    categoryCounts,
     priceLevelAffinities: normalizeScores(priceLevelAverages),
-
-    // Total number of unique places interacted with (used for cold start logic)
-    interactionCount: interactedPlaceIds.length,
-
-    // All place IDs already seen — the recommendation system excludes these
+    interactionCount:     interactedPlaceIds.length,
     interactedPlaceIds,
   };
 }
