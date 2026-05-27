@@ -262,6 +262,13 @@ export default function Discover() {
     if (ref.current) ref.current.scrollBy({ left: dir * 340, behavior: 'smooth' });
   }
 
+  const fetchProfile = useCallback(async () => {
+    try {
+      const res = await api.get('/recommendations/profile');
+      setProfile(res.data.profile);
+    } catch {}
+  }, []);
+
   const fetchData = useCallback(async (city) => {
     setLoading(true);
     try {
@@ -278,7 +285,8 @@ export default function Discover() {
     } finally {
       setLoading(false);
     }
-  }, []);
+    fetchProfile();
+  }, [fetchProfile]);
 
   const fetchSectionPlaces = useCallback(async (tags, setter, city) => {
     const params = new URLSearchParams();
@@ -307,9 +315,7 @@ export default function Discover() {
       })
       .catch(() => {});
 
-    api.get('/recommendations/profile')
-      .then(res => setProfile(res.data.profile))
-      .catch(() => {});
+    fetchProfile();
 
     fetchData('Dublin');
     fetchSectionPlaces(FAMILY_TAGS,        setFamilyPlaces,  'Dublin');
@@ -317,7 +323,7 @@ export default function Discover() {
     api.get('/recommendations/similar?city=Dublin')
       .then(res => setSimilarPlaces(res.data.places || []))
       .catch(() => {});
-  }, [fetchData, fetchSectionPlaces, user]);
+  }, [fetchData, fetchSectionPlaces, fetchProfile, user]);
 
   // Re-fetch "Because you liked" whenever the seed place or city changes
   useEffect(() => {
@@ -1210,9 +1216,9 @@ export default function Discover() {
     </div>
 
     {selectedPlaceId && (
-      <div className="disc-place-modal-backdrop" onClick={() => setSelectedPlaceId(null)}>
+      <div className="disc-place-modal-backdrop" onClick={() => { setSelectedPlaceId(null); fetchProfile(); }}>
         <div className="disc-place-modal" onClick={e => e.stopPropagation()}>
-          <PlaceDetail modalId={selectedPlaceId} onClose={() => setSelectedPlaceId(null)} />
+          <PlaceDetail modalId={selectedPlaceId} onClose={() => { setSelectedPlaceId(null); fetchProfile(); }} />
         </div>
       </div>
     )}
