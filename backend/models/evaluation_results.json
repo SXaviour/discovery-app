@@ -1,25 +1,25 @@
 {
-  "timestamp": "2026-05-07T03:50:20.225Z",
-  "testSize": 9189,
-  "trainSize": 36380,
-  "rmse": 0.307184,
-  "rmseStars": 1.23,
+  "timestamp": "2026-05-28T10:21:47.157Z",
+  "testSize": 9184,
+  "trainSize": 36305,
+  "rmse": 0.316108,
+  "rmseStars": 1.26,
   "precisionAtK": {
     "k": 10,
-    "value": 0.4235,
-    "usersEvaluated": 200
+    "value": 0.431,
+    "usersEvaluated": 197
   },
   "ndcgAtK": {
     "k": 10,
-    "value": 0.5308
+    "value": 0.5359
   },
   "baselines": {
-    "random": 0.018,
-    "popularity": 0.029
+    "random": 0.0198,
+    "popularity": 0.0452
   },
   "coverage": {
-    "value": 0.6691,
-    "placesRecommended": 453,
-    "totalPlaces": 677
+    "value": 0.6938,
+    "placesRecommended": 469,
+    "totalPlaces": 676
   }
 }
