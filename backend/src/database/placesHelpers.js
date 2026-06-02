@@ -3,10 +3,10 @@
 const db = require('../config/database');
 
 // Get all places with optional filters. Supports multi-value category/price arrays,
-// tag overlap filtering, and text search. Returns { places, total } for pagination.
+// tag overlap filtering, and text search. Returns places and total for pagination.
+
 async function getPlaces({
   city, categories, price_levels, min_rating, tags, search, subcategory,
-  // backward-compat single-value aliases still accepted
   category, price_level,
   limit = 20, offset = 0, random = false,
 } = {}) {

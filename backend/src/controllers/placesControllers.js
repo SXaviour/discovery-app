@@ -5,13 +5,12 @@ const { getPlaces, getPlaceById, getPlaceStats } = require('../database/placesHe
 // GET /api/places
 // Supports multi-value filters: categories=adventure,indoor_activity  price_levels=1,2
 // tags=date+night,escape+room  search=escape  min_rating=4.0
-// Also accepts legacy single-value: category=adventure  price_level=2
 async function listPlaces(req, res) {
   try {
     const {
       city, search, min_rating, subcategory,
       categories, price_levels, tags,
-      category, price_level,  // legacy single-value aliases
+      category, price_level,  
       limit = 20, offset = 0, random,
     } = req.query;
 

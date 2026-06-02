@@ -10,10 +10,10 @@ const SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
 const PHOTO_BASE  = 'https://places.googleapis.com/v1';
 
 // Each entry is one Google text search. category, subcategory and tags are assigned
-// at the query level — we don't rely on Google's type labels for our taxonomy.
+// at the query level, we don't rely on Google's type labels for our taxonomy.
 const SEARCHES = [
 
-  // ── INDOOR ACTIVITIES ──────────────────────────────────────────────────────
+  // INDOOR ACTIVITIES
   { query: 'escape rooms in Dublin Ireland',         city: 'Dublin', category: 'indoor_activity', subcategory: 'puzzle_challenge',     tags: ['escape room', 'puzzle', 'group activity', 'date night'],                              pages: 2 },
   { query: 'laser tag Dublin Ireland',               city: 'Dublin', category: 'indoor_activity', subcategory: 'games_play',           tags: ['laser tag', 'group activity', 'high energy'],                                         pages: 1 },
   { query: 'bowling alleys Dublin Ireland',          city: 'Dublin', category: 'indoor_activity', subcategory: 'social_fun',           tags: ['bowling', 'group activity', 'date night', 'birthday activity'],                        pages: 1 },
@@ -30,7 +30,7 @@ const SEARCHES = [
   { query: 'skating rink Dublin Ireland',            city: 'Dublin', category: 'indoor_activity', subcategory: 'social_fun',           tags: ['skating', 'ice skating', 'roller skating', 'group activity', 'date night', 'birthday activity'], pages: 1 },
   { query: 'racing simulator Dublin Ireland',        city: 'Dublin', category: 'indoor_activity', subcategory: 'digital_immersive',    tags: ['racing simulator', 'sim racing', 'immersive', 'date night', 'group activity'],       pages: 1 },
 
-  // ── OUTDOOR ACTIVITIES ─────────────────────────────────────────────────────
+  // OUTDOOR ACTIVITIES
   { query: 'hiking trails Dublin Ireland',           city: 'Dublin', category: 'outdoor_activity', subcategory: 'movement_exploration', tags: ['hiking', 'scenic routes', 'nature', 'solo adventure'],                               pages: 2 },
   { query: 'kayaking Dublin Ireland',                city: 'Dublin', category: 'outdoor_activity', subcategory: 'water_based',          tags: ['kayaking', 'water sports', 'group activity', 'adventure'],                           pages: 1 },
   { query: 'cycling routes Dublin Ireland',          city: 'Dublin', category: 'outdoor_activity', subcategory: 'active_outdoors',      tags: ['cycling', 'active', 'solo adventure'],                                               pages: 1 },
@@ -41,7 +41,7 @@ const SEARCHES = [
   { query: 'surfing Dublin Ireland',                 city: 'Dublin', category: 'outdoor_activity', subcategory: 'water_based',          tags: ['surfing', 'water sports', 'group activity', 'adventure'],                           pages: 1 },
   { query: 'horse riding Dublin Ireland',            city: 'Dublin', category: 'outdoor_activity', subcategory: 'active_outdoors',      tags: ['horse riding', 'outdoor', 'unique', 'solo adventure'],                              pages: 1 },
 
-  // ── UNIQUE EXPERIENCES ─────────────────────────────────────────────────────
+  // UNIQUE EXPERIENCES
   { query: 'axe throwing Dublin Ireland',            city: 'Dublin', category: 'unique_experience', subcategory: 'high_energy',          tags: ['axe throwing', 'group activity', 'date night', 'high energy', 'birthday activity'], pages: 1 },
   { query: 'trampoline park Dublin Ireland',         city: 'Dublin', category: 'unique_experience', subcategory: 'high_energy',          tags: ['trampoline', 'birthday activity', 'group activity', 'high energy'],                pages: 1 },
   { query: 'rage room Dublin Ireland',               city: 'Dublin', category: 'unique_experience', subcategory: 'high_energy',          tags: ['rage room', 'smash room', 'high energy', 'group activity'],                        pages: 1 },
@@ -57,7 +57,7 @@ const SEARCHES = [
   { query: 'sauna experience Dublin Ireland',        city: 'Dublin', category: 'unique_experience', subcategory: 'wellness_recovery',    tags: ['sauna', 'wellness', 'cold plunge', 'solo adventure'],                              pages: 1 },
   { query: 'aquarium Dublin Ireland',               city: 'Dublin', category: 'unique_experience', subcategory: 'immersive_interactive', tags: ['aquarium', 'nature', 'unique', 'group activity', 'family friendly'],               pages: 1 },
 
-  // ── ADVENTURE ──────────────────────────────────────────────────────────────
+  // ADVENTURE
   { query: 'paintball Dublin Ireland',               city: 'Dublin', category: 'adventure', subcategory: 'high_energy',  tags: ['paintball', 'group activity', 'outdoor', 'high energy', 'birthday activity'],                      pages: 1 },
   { query: 'obstacle course Dublin Ireland',         city: 'Dublin', category: 'adventure', subcategory: 'high_energy',  tags: ['obstacle course', 'group activity', 'high energy', 'birthday activity'],          pages: 1 },
   { query: 'ninja warrior gym Dublin Ireland',      city: 'Dublin', category: 'adventure', subcategory: 'high_energy',  tags: ['ninja warrior', 'obstacle course', 'high energy', 'group activity'],              pages: 1 },
@@ -69,7 +69,7 @@ const SEARCHES = [
   { query: 'go karting Dublin Ireland',              city: 'Dublin', category: 'adventure', subcategory: 'high_energy',  tags: ['go karting', 'racing', 'high energy', 'group activity', 'birthday activity', 'date night'],        pages: 1 },
   { query: 'zipline Dublin Ireland',                 city: 'Dublin', category: 'adventure', subcategory: 'high_energy',  tags: ['ziplining', 'zip line', 'outdoor', 'high energy', 'group activity', 'adventure'],                  pages: 1 },
 
-  // ── SPORTS & FITNESS ───────────────────────────────────────────────────────
+  // SPORTS & FITNESS
   { query: 'padel courts Dublin Ireland',            city: 'Dublin', category: 'sports_fitness', subcategory: 'team_sports',       tags: ['padel', 'date night', 'group activity'],                                                  pages: 1 },
   { query: 'tennis courts Dublin Ireland',           city: 'Dublin', category: 'sports_fitness', subcategory: 'team_sports',       tags: ['tennis', 'date night', 'group activity'],                                                 pages: 1 },
   { query: 'football pitches Dublin Ireland',        city: 'Dublin', category: 'sports_fitness', subcategory: 'team_sports',       tags: ['football', 'soccer', 'group activity'],                                                  pages: 1 },
@@ -180,7 +180,7 @@ async function savePlace(place, city, category, subcategory, tags) {
     place.regularOpeningHours?.openNow ?? null,
   ]);
 }
-
+// Main script function — loops through all searches and saves results to the database
 async function run() {
   console.log('Starting activity place fetch...\n');
   let total = 0;

@@ -1167,7 +1167,7 @@
 
 }
 
-/* ===== SECTION ACTION HEADER (title + arrows / see all) ===== */
+/* SECTION ACTION HEADER (title + arrows / see all)*/
 .disc-section-action-head {
   display: flex;
   align-items: center;
@@ -1391,7 +1391,7 @@
   color: #6b7280;
 }
 
-/* ===== COLLECTIONS ===== */
+/* COLLECTIONS*/
 .disc-collection-card {
   flex-shrink: 0;
   position: relative;
@@ -1447,7 +1447,7 @@
   margin-top: 2px;
 }
 
-/* ===== PLACE DETAIL MODAL ===== */
+/* PLACE DETAIL MODAL */
 .disc-place-modal-backdrop {
   position: fixed;
   inset: 0;

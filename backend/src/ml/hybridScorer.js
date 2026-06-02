@@ -2,10 +2,6 @@
 // Stage 1: Content scorer ranks ALL unseen places, returns top 100 candidates
 // Stage 2: NCF re-ranks those top 100 using collaborative filtering signal
 
-// Blending uses Reciprocal Rank Fusion (RRF) instead of raw score mixing.
-// RRF is scale-independent — it converts NCF output to a rank first,
-// so we're never mixing two uncalibrated numbers directly.
-
 // Falls back to content-only if the model isn't loaded or user is unknown.
 
 const tf   = require('@tensorflow/tfjs');
@@ -19,7 +15,7 @@ const MODELS_DIR = path.join(__dirname, '../../models');
 // NCF only needs to differentiate between already-good options
 const NCF_CANDIDATE_POOL = 100;
 
-// Content carries 60%, NCF carries 40% — both are min-max normalised within the pool
+// Content carries 60%, NCF carries 40% 
 // so they're on the same scale before blending
 const CONTENT_WEIGHT = 0.6;
 const NCF_WEIGHT     = 0.4;
@@ -110,16 +106,15 @@ function predictNCFScores(model, maps, userId, places) {
 }
 
 async function getHybridRecommendations(userId, { city, limit = 20 } = {}) {
-  // Stage 1 — content scorer ranks every unseen place
+  // content scorer ranks every unseen place
   const { scored: allCandidates, meta } = await scoreAllCandidates(userId, { city });
 
   // Sort by content score and take the top 100 to pass to the NCF re-ranker
-  // No point running NCF on 800+ places when content already filters to the best ones
   allCandidates.sort((a, b) => b.contentScore - a.contentScore);
   const top = allCandidates.slice(0, NCF_CANDIDATE_POOL);
   const rest = allCandidates.slice(NCF_CANDIDATE_POOL); // everything else gets content score only
 
-  // Stage 2 — try to load NCF and re-rank the top 100
+  // Try to load NCF and re-rank the top 100
   const ncf = await loadNCFModel();
   const ncfScores = ncf ? predictNCFScores(ncf.model, ncf.maps, userId, top) : null;
   const useHybrid = ncfScores !== null;
@@ -127,14 +122,10 @@ async function getHybridRecommendations(userId, { city, limit = 20 } = {}) {
   let finalList;
 
   if (useHybrid) {
-    // Min-max normalise both content scores and NCF scores within the pool
-    // so they're on the same 0–1 scale before blending.
-    // RRF was collapsing NCF's contribution to ~0.003 range — negligible.
-    // Normalising within the pool gives NCF a real 40% voice.
     const ncfValues     = top.map(p => ncfScores.get(p.id) ?? 0);
     const minNCF        = Math.min(...ncfValues);
     const maxNCF        = Math.max(...ncfValues);
-    const ncfRange      = maxNCF - minNCF || 1; // guard against all-same scores
+    const ncfRange      = maxNCF - minNCF || 1; 
 
     const contentValues = top.map(p => p.contentScore);
     const minContent    = Math.min(...contentValues);

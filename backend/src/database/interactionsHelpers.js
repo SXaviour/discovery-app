@@ -143,7 +143,7 @@ async function getUserPlaceInteractions(userId, placeId) {
 }
 
 // Find places liked by users with similar interaction history to the given user.
-// Only runs if the user has at least 3 interactions — below that the overlap signal is too weak.
+// Only runs if the user has at least 3 interactions
 async function getSimilarUserPicks(userId, city = null, limit = 25) {
   const result = await db.query(`
     WITH my_places AS (

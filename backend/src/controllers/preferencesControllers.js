@@ -30,12 +30,7 @@ async function getMyPreferences(req, res) {
 
 // PUT /api/preferences
 // Updates the user's preferences — only the fields sent in the body are updated
-// Body example:
-// {
-//   "preferred_categories": ["restaurant", "museum"],
-//   "preferred_price_range": { "min": 1, "max": 3 },
-//   "interests": ["history", "food", "outdoors"]
-// }
+
 async function updateMyPreferences(req, res) {
   try {
     const { preferred_categories, preferred_price_range, interests, default_city } = req.body;

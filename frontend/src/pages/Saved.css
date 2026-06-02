@@ -1,4 +1,3 @@
-/* Saved page */
 
 .sv-layout {
   display: flex;
@@ -7,7 +6,7 @@
   color: #fff;
 }
 
-/* ===== SIDEBAR ===== */
+/* SIDEBAR */
 .sv-sidebar {
   width: 220px;
   flex-shrink: 0;
@@ -96,7 +95,7 @@
   padding: 40px 48px 80px;
 }
 
-/* ===== HEADER ===== */
+/* HEADER */
 .sv-header {
   display: flex;
   align-items: flex-start;
@@ -139,7 +138,7 @@
 .sv-icon-btn:hover { background: #1a1a1a; color: #fff; }
 
 
-/* ===== TABS ===== */
+/* TABS */
 .sv-tabs {
   display: flex;
   gap: 0;
@@ -168,14 +167,14 @@
   border-bottom-color: #22c55e;
 }
 
-/* ===== BODY ===== */
+/* BODY */
 .sv-body {
   display: flex;
   flex-direction: column;
   gap: 32px;
 }
 
-/* ===== SECTION HEAD ===== */
+/* SECTION HEAD */
 .sv-section-head {
   display: flex;
   align-items: center;
@@ -201,14 +200,14 @@
   color: #6b7280;
 }
 
-/* ===== GRID ===== */
+/* GRID  */
 .sv-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
-/* ===== CARDS ===== */
+/* CARDS */
 .sv-card {
   position: relative;
   border-radius: 14px;
@@ -321,7 +320,7 @@
   margin-top: 5px;
 }
 
-/* ===== EMPTY STATE ===== */
+/* EMPTY STATE */
 .sv-empty {
   display: flex;
   flex-direction: column;
@@ -359,7 +358,7 @@
 
 .sv-empty-link:hover { text-decoration: underline; }
 
-/* ===== COLLECTIONS ===== */
+/* COLLECTIONS */
 .sv-create-btn {
   display: flex;
   align-items: center;
@@ -528,7 +527,7 @@
   text-align: center;
 }
 
-/* ===== CTA BANNER ===== */
+/* CTA BANNER */
 .sv-cta {
   position: relative;
   border-radius: 20px;
@@ -582,7 +581,7 @@
 
 .sv-cta-btn:hover { background: #16a34a; }
 
-/* ===== LOADING ===== */
+/* LOADING */
 .sv-loading {
   display: flex;
   align-items: center;
@@ -601,7 +600,7 @@
 
 @keyframes sv-spin { to { transform: rotate(360deg); } }
 
-/* ===== MODAL ===== */
+/* MODAL */
 .sv-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -631,7 +630,7 @@
   to   { transform: scale(1);    opacity: 1; }
 }
 
-/* ===== RESPONSIVE ===== */
+/* RESPONSIVE */
 @media (max-width: 1024px) {
   .sv-grid { grid-template-columns: repeat(3, 1fr); }
   .sv-page { padding: 32px 28px 60px; }

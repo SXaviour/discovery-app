@@ -16,16 +16,16 @@ const path = require('path');
 const db   = require('../config/database');
 
 const MODELS_DIR         = path.join(__dirname, '../../models');
-const EMBEDDING_DIM      = 32;  // 32 dims needed to capture nuance across 400 users × 925 places — 16 was too small, precision dropped
-const CATEGORY_EMBED_DIM = 8;   // Smaller embedding for categories — only 7 unique values, doesn't need more
-const EPOCHS             = 50;  // Max epochs — early stopping will likely cut this short
-const BATCH_SIZE         = 512; // How many samples to process at once during training
+const EMBEDDING_DIM      = 32;  
+const CATEGORY_EMBED_DIM = 8;   
+const EPOCHS             = 50;
+const BATCH_SIZE         = 512; 
 const LEARNING_RATE      = 0.001;
-const DROPOUT_RATE       = 0.2; // 20% dropout — 30% was too aggressive for ~100K samples and caused underfitting
-const PATIENCE           = 10;  // Give training more room to find a better minimum before giving up
-const NEGATIVE_RATIO     = 4;   // More contrast examples — works well now that negatives are soft (0.1) not hard (0.0)
+const DROPOUT_RATE       = 0.2;
+const PATIENCE           = 10;  
+const NEGATIVE_RATIO     = 4;   
 
-// STEP 1: LOAD INTERACTIONS
+// LOAD INTERACTIONS
 
 async function loadInteractions() {
   const result = await db.query(`
@@ -37,9 +37,8 @@ async function loadInteractions() {
   return result.rows;
 }
 
-// STEP 2: CONVERT TO PREFERENCE SCORES
+// CONVERT TO PREFERENCE SCORES
 // Combines all interaction types for the same user+place into one score
-// Same logic as the user profile system so everything is consistent
 
 function toPreferenceScore(interactions) {
   // Group by user_id + place_id
@@ -67,21 +66,16 @@ function toPreferenceScore(interactions) {
     }
 
     // Normalize score to 0–1 range for the neural network
-    // Uses (score - 1) / 4 so: 1 star = 0.0, 3 stars = 0.5, 5 stars = 1.0
-    // This spreads the range better than score/5 which wastes the 0–0.2 zone
     samples.push({ user_id: parseInt(user_id), place_id: parseInt(place_id), category, subcategory, score: (score - 1) / 4 });
   }
 
   return samples;
 }
 
-// STEP 2B: GENERATE NEGATIVE SAMPLES
+// GENERATE NEGATIVE SAMPLES
 // The model needs to see "this user would NOT enjoy this place" examples, not just positives
 // Without negatives, it predicts similar scores for everything and just defaults to popularity
-// For each user we pick random places they never interacted with and label them as 0.0
-
 function generateNegativeSamples(positiveSamples, placeLookup) {
-  // Build a fast lookup of all observed user-place pairs so we never use one as a negative
   const seenPairs = new Set(positiveSamples.map(s => `${s.user_id}_${s.place_id}`));
   const allPlaceIds = Object.keys(placeLookup).map(Number);
 
@@ -103,8 +97,8 @@ function generateNegativeSamples(positiveSamples, placeLookup) {
 
   for (const [userId, userSamples] of Object.entries(byUser)) {
     const needed     = userSamples.length * NEGATIVE_RATIO;
-    const hardNeeded = Math.floor(needed * 0.5); // 50% hard — from categories the user likes
-    const easyNeeded = needed - hardNeeded;       // 50% easy — fully random
+    const hardNeeded = Math.floor(needed * 0.5); // 50% hard from categories the user likes
+    const easyNeeded = needed - hardNeeded;       // 50% easy fully random
 
     // Work out which categories this user has interacted with
     const userCategories = [...new Set(userSamples.map(s => s.category))];
@@ -130,7 +124,7 @@ function generateNegativeSamples(positiveSamples, placeLookup) {
         place_id:    placeId,
         category:    placeLookup[placeId].category,
         subcategory: placeLookup[placeId].subcategory,
-        score:       0.1, // soft "unknown" — not visited doesn't mean disliked
+        score:       0.1, 
       });
       hardAdded++;
     }
@@ -152,7 +146,7 @@ function generateNegativeSamples(positiveSamples, placeLookup) {
         place_id:    placeId,
         category:    placeLookup[placeId].category,
         subcategory: placeLookup[placeId].subcategory,
-        score:       0.1, // soft "unknown" — not visited doesn't mean disliked
+        score:       0.1, 
       });
       easyAdded++;
     }
@@ -161,7 +155,7 @@ function generateNegativeSamples(positiveSamples, placeLookup) {
   return negatives;
 }
 
-// STEP 3: BUILD ID MAPS
+// BUILD ID MAPS
 // The model works with sequential indices (0, 1, 2...) not database IDs (which can have gaps)
 
 function buildMaps(samples) {
@@ -182,9 +176,8 @@ function buildMaps(samples) {
   };
 }
 
-// STEP 4: BUILD THE MODEL
+// BUILD THE MODEL
 // NCF architecture: user embedding + place embedding + category embedding → dense layers → predicted score
-
 // An embedding is a row of learned numbers that represents a user or place
 // Two users with similar taste end up with similar embedding values
 // The model learns these embeddings by trying to predict scores accurately
@@ -221,8 +214,7 @@ function buildModel(numUsers, numPlaces, numCategories, numSubcategories) {
 
   const model = tf.model({ inputs: [userInput, placeInput, categoryInput, subcategoryInput], outputs: output });
 
-  // MSE is the right choice here because our targets are continuous (0.0, 0.25, 0.5, 0.75, 1.0)
-  // not binary (0 or 1) — BCE would be a mismatch since it assumes probabilities
+  
   model.compile({
     optimizer: tf.train.adam(LEARNING_RATE),
     loss: 'meanSquaredError',
@@ -232,7 +224,7 @@ function buildModel(numUsers, numPlaces, numCategories, numSubcategories) {
   return model;
 }
 
-// STEP 5: PREPARE TENSORS
+// PREPARE TENSORS
 
 function prepareTensors(samples, userMap, placeMap, categoryMap, subcategoryMap) {
   const userIndices        = samples.map(s => userMap[s.user_id]);
@@ -250,7 +242,7 @@ function prepareTensors(samples, userMap, placeMap, categoryMap, subcategoryMap)
   };
 }
 
-// STEP 6: TRAIN
+// TRAIN
 
 async function train() {
   console.log('Loading interactions from database...');
@@ -267,7 +259,7 @@ async function train() {
     placeLookup[row.id] = { category: row.category, subcategory: row.subcategory };
   }
 
-  // Generate negative samples — places each user never interacted with, scored 0.0
+  // Generate negative samples
   // This teaches the model what "not interested" looks like
   const negativeSamples = generateNegativeSamples(positiveSamples, placeLookup);
   console.log(`  ${negativeSamples.length} negative samples generated (${NEGATIVE_RATIO}x ratio)`);
@@ -335,7 +327,7 @@ async function train() {
   subcategoryTensor.dispose();
   scoreTensor.dispose();
 
-  // STEP 7: SAVE
+  // SAVE
   // tensorflow/tfjs (pure JS) has no built-in filesystem save handler — that's only in tfjs-node
   // Instead we use a custom save handler that intercepts the model artifacts and writes them
   // to disk manually using Node's fs module
@@ -368,7 +360,7 @@ async function train() {
   );
   console.log('ID maps saved to models/maps.json');
 
-  // Save training metrics so they can be graphed for the report
+  // Save training metrics
   fs.writeFileSync(
     path.join(MODELS_DIR, 'training_metrics.json'),
     JSON.stringify(metricsLog, null, 2)

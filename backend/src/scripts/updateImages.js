@@ -12,7 +12,7 @@ const DELAY_MS  = 50; // small delay between requests to stay within rate limits
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
+// Calls the Google photo media endpoint to get the real CDN URL for a photo reference
 async function getCdnUrl(photoReference) {
   const url = `https://places.googleapis.com/v1/${photoReference}/media?maxHeightPx=800&key=${API_KEY}&skipHttpRedirect=true`;
   const res  = await fetch(url);
@@ -20,7 +20,7 @@ async function getCdnUrl(photoReference) {
   const data = await res.json();
   return data.photoUri || null;
 }
-
+// Main function: fetch all places with a photo reference, get the CDN URL for each, and update the database
 async function run() {
   const result = await db.query(
     'SELECT id, name, photo_reference FROM places WHERE photo_reference IS NOT NULL AND is_closed = false'

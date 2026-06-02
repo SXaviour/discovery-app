@@ -12,7 +12,7 @@ const USER_COUNT       = 200;
 const DRIFT_PROBABILITY = 0.15; // 15% chance a user tries something outside their profile
 const SECONDARY_SCALE   = 0.30; // Secondary profile interactions are 30% of primary volume
 
-// ---------- NAME POOL ----------
+// NAME POOL
 const FIRST_NAMES = [
   'james','oliver','harry','jack','george','noah','charlie','jacob','alfie','freddie',
   'archie','oscar','henry','leo','william','thomas','ethan','luca','mason','logan',
@@ -39,7 +39,7 @@ const PROFILES = [
   'mixed',
 ];
 
-// HELPERS 
+// Helpers
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -54,7 +54,7 @@ function scale(base) {
 
 //  GENERATE USER LIST 
 // Each user has a PRIMARY profile (dominant taste) and a SECONDARY profile (30%)
-// This creates multi-interest users — more realistic than a single clean category
+// This creates multi-interest users
 const TEST_USERS = Array.from({ length: USER_COUNT }).map((_, i) => {
   const first     = pick(FIRST_NAMES);
   const last      = pick(LAST_NAMES);
@@ -76,7 +76,6 @@ async function getAllPlaces() {
 
 // PROFILE INTERACTION BUILDER 
 // Builds the raw interactions for a single profile at a given scale multiplier
-// mult=1.0 for primary, mult=SECONDARY_SCALE for secondary
 function getProfileRaw(profile, by, mult) {
   const s = base => Math.max(0, Math.floor(base * mult * (0.7 + Math.random() * 0.7)));
 
@@ -263,7 +262,6 @@ async function recalculateAverages() {
   `);
 }
 
-// RUN 
 async function run() {
   console.log(`Seeding ${USER_COUNT} users with multi-interest profiles + drift...\n`);
 

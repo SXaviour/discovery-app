@@ -1,3 +1,4 @@
+// This page is for users who forgot their password. It allows them to enter their email and receive a reset link.
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';

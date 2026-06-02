@@ -1,3 +1,4 @@
+// This page is for users who have clicked a password reset link from their email. It allows them to set a new password using the token in the URL.
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';

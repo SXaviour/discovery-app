@@ -115,10 +115,7 @@ CREATE TABLE user_preferences (
 CREATE INDEX idx_preferences_user ON user_preferences(user_id);
 
 
--- SAMPLE DATA (Optional - for testing)
-
--- Insert a test user (password is 'password123' hashed with bcrypt)
--- Note: This is a fake hash. bcrypt hash will be use later.
+-- SAMPLE DATA (for testing)
 INSERT INTO users (email, password_hash, username) 
 VALUES (
   'test@example.com', 

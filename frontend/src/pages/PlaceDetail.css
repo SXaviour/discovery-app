@@ -6,7 +6,7 @@
   color: #fff;
 }
 
-/* ===== LOADING / ERROR ===== */
+/* LOADING / ERROR */
 .pd-loading {
   min-height: 100vh;
   background: #000;
@@ -46,7 +46,7 @@
   cursor: pointer;
 }
 
-/* ===== HERO ===== */
+/* HERO*/
 .pd-hero {
   position: relative;
   width: 100%;
@@ -129,7 +129,7 @@
   padding: 5px 12px;
 }
 
-/* ===== GALLERY CONTROLS ===== */
+/* GALLERY CONTROLS */
 .pd-gallery-arrow {
   position: absolute;
   top: 50%;
@@ -179,7 +179,7 @@
   transform: scale(1.3);
 }
 
-/* ===== BODY LAYOUT ===== */
+/* BODY LAYOUT */
 .pd-body {
   display: grid;
   grid-template-columns: 1fr 300px;
@@ -189,7 +189,7 @@
   padding: 36px 24px 80px;
 }
 
-/* ===== MAIN (LEFT) ===== */
+/* MAIN (LEFT)*/
 .pd-cat-label {
   font-size: 0.72rem;
   font-weight: 700;
@@ -281,7 +281,7 @@
   text-transform: capitalize;
 }
 
-/* ===== WHY YOU'LL LOVE IT ===== */
+/* WHY YOU'LL LOVE IT */
 .pd-why {
   margin-bottom: 32px;
 }
@@ -328,7 +328,7 @@
   line-height: 1.4;
 }
 
-/* ===== RATING ===== */
+/* RATING */
 .pd-rate-section {
   padding-top: 24px;
   border-top: 1px solid #1e1e1e;
@@ -357,7 +357,7 @@
   margin: 0;
 }
 
-/* ===== ACTION CARD (RIGHT) ===== */
+/* ACTION CARD (RIGHT) */
 .pd-action-card {
   position: sticky;
   top: 24px;
@@ -442,7 +442,7 @@
 .pd-save-btn:hover,
 .pd-visited-btn:hover { background: #222; }
 
-/* ===== COLLECTION PICKER ===== */
+/* COLLECTION PICKER */
 .pd-collection-wrap {
   position: relative;
 }
@@ -650,7 +650,7 @@
 .pd-hours-day { flex-shrink: 0; }
 .pd-hours-time { text-align: right; color: inherit; }
 
-/* ===== RESPONSIVE ===== */
+/* RESPONSIVE */
 @media (max-width: 900px) {
   .pd-body {
     grid-template-columns: 1fr;

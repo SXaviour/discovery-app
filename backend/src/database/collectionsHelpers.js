@@ -1,3 +1,4 @@
+// Collections management: create collections, add/remove places, get user collections with place counts and cover images.
 const db = require('../config/database');
 
 async function createCollection(userId, name, description) {
@@ -7,7 +8,7 @@ async function createCollection(userId, name, description) {
   );
   return result.rows[0];
 }
-
+// Get all collections for a user, including place counts and cover images
 async function getUserCollections(userId) {
   const result = await db.query(`
     SELECT
@@ -27,7 +28,7 @@ async function getUserCollections(userId) {
   `, [userId]);
   return result.rows;
 }
-
+// Get a single collection by ID, including all places in it
 async function getCollectionWithPlaces(collectionId, userId) {
   const col = await db.query(
     'SELECT * FROM collections WHERE id = $1 AND user_id = $2',
@@ -48,7 +49,7 @@ async function getCollectionWithPlaces(collectionId, userId) {
 
   return { ...col.rows[0], places: places.rows };
 }
-
+// Add a place to a collection (idempotent, won't add duplicates)
 async function addPlaceToCollection(collectionId, placeId, userId) {
   const col = await db.query(
     'SELECT id FROM collections WHERE id = $1 AND user_id = $2',

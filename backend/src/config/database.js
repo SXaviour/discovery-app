@@ -34,12 +34,10 @@ pool.query('SELECT NOW()', (err, res) => {
 
 // Export query function
 module.exports = {
-  // Execute a query
-  query: (text, params) => pool.query(text, params),
   
-  // Get a client from the pool (for transactions)
+  query: (text, params) => pool.query(text, params),
   getClient: () => pool.connect(),
   
-  // End the pool (close all connections)
+  // Close all connections
   end: () => pool.end(),
 };

@@ -1,3 +1,4 @@
+// Controller functions for collection-related routes
 const {
   createCollection,
   getUserCollections,
@@ -7,7 +8,7 @@ const {
   deleteCollection,
   getPlaceCollectionIds,
 } = require('../database/collectionsHelpers');
-
+// list all of the user's collections (without places)
 async function listCollections(req, res) {
   try {
     const collections = await getUserCollections(req.session.userId);
@@ -17,7 +18,7 @@ async function listCollections(req, res) {
     res.status(500).json({ success: false, error: 'Failed to fetch collections' });
   }
 }
-
+// creates a new collection for the user and returns its details
 async function createCol(req, res) {
   try {
     const { name, description } = req.body;
@@ -29,7 +30,7 @@ async function createCol(req, res) {
     res.status(500).json({ success: false, error: 'Failed to create collection' });
   }
 }
-
+// get details of a single collection, including the places in it
 async function getCollection(req, res) {
   try {
     const col = await getCollectionWithPlaces(parseInt(req.params.id), req.session.userId);
@@ -40,7 +41,7 @@ async function getCollection(req, res) {
     res.status(500).json({ success: false, error: 'Failed to fetch collection' });
   }
 }
-
+// Deletes a collection and all its place associations
 async function deleteCol(req, res) {
   try {
     const result = await deleteCollection(parseInt(req.params.id), req.session.userId);
@@ -51,7 +52,7 @@ async function deleteCol(req, res) {
     res.status(500).json({ success: false, error: 'Failed to delete collection' });
   }
 }
-
+// Adds a place to a collection
 async function addPlace(req, res) {
   try {
     const result = await addPlaceToCollection(
@@ -66,7 +67,7 @@ async function addPlace(req, res) {
     res.status(500).json({ success: false, error: 'Failed to add place' });
   }
 }
-
+// Removes a place from a collection
 async function removePlace(req, res) {
   try {
     const result = await removePlaceFromCollection(
@@ -81,7 +82,7 @@ async function removePlace(req, res) {
     res.status(500).json({ success: false, error: 'Failed to remove place' });
   }
 }
-
+// Gets the IDs of all collections that a place is in for the current user
 async function placeCollections(req, res) {
   try {
     const ids = await getPlaceCollectionIds(parseInt(req.params.placeId), req.session.userId);

@@ -21,7 +21,7 @@ const isProd = process.env.NODE_ENV === 'production';
 if (isProd) app.set('trust proxy', 1);
 
 
-// ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
+// MIDDLEWARE 
 
 // In production the frontend is served from the same origin, so CORS is only
 // needed in development (where React dev server runs on a different port)
@@ -52,7 +52,7 @@ app.use(session({
 }));
 
 
-// ─── API ROUTES ───────────────────────────────────────────────────────────────
+// API ROUTES
 
 app.use('/api/auth', authRoutes);
 app.use('/api/places', placesRoutes);
@@ -80,7 +80,7 @@ app.get('/api/test-db', async (req, res) => {
 });
 
 
-// ─── STATIC FILES (production) ───────────────────────────────────────────────
+// STATIC FILES
 
 // Serve the built React app for all non-API routes
 // path resolves to <repo-root>/frontend/build relative to this file's location
@@ -93,7 +93,7 @@ app.get(/.*/, (_req, res) => {
 });
 
 
-// ─── ERROR HANDLING ───────────────────────────────────────────────────────────
+// ERROR HANDLING
 
 app.use((err, _req, res, _next) => {
   console.error('Server error:', err);
@@ -104,7 +104,7 @@ app.use((err, _req, res, _next) => {
 });
 
 
-// ─── START ────────────────────────────────────────────────────────────────────
+// START
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} [${process.env.NODE_ENV}]`);

@@ -7,7 +7,7 @@
   color: #fff;
 }
 
-/* ── SIDEBAR ── */
+/* SIDEBAR */
 
 .st-sidebar {
   width: 220px;
@@ -96,7 +96,7 @@
   text-overflow: ellipsis;
 }
 
-/* ── MAIN AREA ── */
+/* MAIN AREA */
 
 .st-page {
   flex: 1;
@@ -111,7 +111,7 @@
   margin-bottom: 32px;
 }
 
-/* ── SECTIONS ── */
+/* SECTIONS */
 
 .st-section {
   background: #0a0a0a;
@@ -132,7 +132,7 @@
 .st-section--danger { border-color: rgba(239, 68, 68, 0.2); }
 .st-section-title--danger { color: #ef4444; }
 
-/* ── FIELDS ── */
+/* FIELDS */
 
 .st-field { margin-bottom: 4px; }
 
@@ -177,7 +177,7 @@
   margin: 22px 0;
 }
 
-/* ── BUTTONS ── */
+/* BUTTONS */
 
 .st-btn {
   padding: 10px 20px;
@@ -197,7 +197,7 @@
 .st-btn:disabled { opacity: 0.5; cursor: default; }
 .st-btn--mt { margin-top: 4px; }
 
-/* ── STATUS MESSAGES ── */
+/* STATUS MESSAGES */
 
 .st-status {
   font-size: 0.8rem;
@@ -209,7 +209,7 @@
 .st-status--error   { color: #ef4444; }
 
 
-/* ── DANGER ITEMS ── */
+/* DANGER ITEMS */
 
 .st-danger-item {
   display: flex;
@@ -257,7 +257,7 @@
   border-color: #ef4444;
 }
 
-/* ── MODALS ── */
+/* MODALS */
 
 .st-modal-backdrop {
   position: fixed;

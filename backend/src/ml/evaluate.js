@@ -1,9 +1,9 @@
 // Evaluates how good the trained NCF model actually is at recommending places
 // Run with: npm run evaluate
-//
-// Measures three things:
+// Measures four things:
 //   RMSE — how far off are the model's predicted scores from real scores (in star terms)
 //   Precision@10 — of the top 10 recommendations, how many did the user actually enjoy
+//   NDCG@10 — how high in the list of 10 recommendations do the places the user enjoyed appear
 //   Coverage — what percentage of all places does the model ever recommend to someone
 
 require('dotenv').config();
@@ -13,8 +13,8 @@ const path = require('path');
 const db   = require('../config/database');
 
 const MODELS_DIR = path.join(__dirname, '../../models');
-const K          = 10;     // Top K recommendations to evaluate
-const POSITIVE_THRESHOLD = 0.8; // Score >= 0.8 (4+ stars) counts as "user liked this"
+const K = 10;  
+const POSITIVE_THRESHOLD = 0.8;
 
 // Same preference score logic as train.js — converts interactions to one score per user-place pair
 function toPreferenceScore(interactions) {
@@ -38,15 +38,14 @@ function toPreferenceScore(interactions) {
       score = 4.0;
     }
 
-    // Must match the normalization in train.js: (score - 1) / 4
-    // 1 star = 0.0, 3 stars = 0.5, 5 stars = 1.0
+    
     samples.push({ user_id: parseInt(user_id), place_id: parseInt(place_id), category, subcategory, score: (score - 1) / 4 });
   }
 
   return samples;
 }
 
-// Load the saved model from disk using the custom handler (since pure tfjs has no file:// support)
+// Load the saved model from disk using the custom handler 
 async function loadModel() {
   const modelTopology = JSON.parse(fs.readFileSync(path.join(MODELS_DIR, 'model.json'), 'utf8'));
   const weightSpecs   = JSON.parse(fs.readFileSync(path.join(MODELS_DIR, 'weight_specs.json'), 'utf8'));
@@ -127,7 +126,7 @@ async function evaluate() {
     placePopularity[s.place_id] = (placePopularity[s.place_id] || 0) + 1;
   }
 
-  // ─── RMSE ───────────────────────────────────────────────
+  // RMSE
   // Predict each test sample and measure how far off we are
   console.log('Calculating RMSE...');
 
@@ -149,7 +148,7 @@ async function evaluate() {
 
   console.log(`  RMSE: ${rmse.toFixed(4)} (${rmseStars.toFixed(2)} stars on a 5-star scale)\n`);
 
-  // ─── PRECISION@K ────────────────────────────────────────
+  // PRECISION@K
   // For each user: score all places not in their train set, take top K, check against test positives
   console.log(`Calculating Precision@${K}...`);
 
@@ -219,7 +218,7 @@ async function evaluate() {
     scored.sort((a, b) => b.score - a.score);
     const topK = scored.slice(0, K);
 
-    // ── NCF precision + NDCG ──────────────────────────────
+    // NCF precision + NDCG
     let hits = 0;
     let dcg  = 0;
     for (let i = 0; i < topK.length; i++) {
@@ -238,7 +237,7 @@ async function evaluate() {
     totalPrecision += hits / K;
     totalNdcg      += idcg > 0 ? dcg / idcg : 0;
 
-    // ── Random baseline ───────────────────────────────────
+    // Random baseline
     // Shuffle the same candidate pool and pick the first K
     const randomTopK = [...candidatePlaceIds].sort(() => Math.random() - 0.5).slice(0, K);
     let randomHits = 0;
@@ -247,7 +246,7 @@ async function evaluate() {
     }
     totalRandomPrecision += randomHits / K;
 
-    // ── Popularity baseline ───────────────────────────────
+    // Popularity baseline
     // Recommend the K most-interacted places from the training set the user hasn't seen
     const popularTopK = [...candidatePlaceIds]
       .sort((a, b) => (placePopularity[b] || 0) - (placePopularity[a] || 0))
@@ -271,12 +270,12 @@ async function evaluate() {
   console.log(`  Random baseline:     ${(avgRandomPrecision * 100).toFixed(1)}%`);
   console.log(`  Popularity baseline: ${(avgPopularPrecision * 100).toFixed(1)}%\n`);
 
-  // ─── COVERAGE ───────────────────────────────────────────
+  // COVERAGE
   const totalPlaces = Object.keys(placeMap).length;
   const coverage    = allRecommendedIds.size / totalPlaces;
   console.log(`  Coverage: ${(coverage * 100).toFixed(1)}% (${allRecommendedIds.size} of ${totalPlaces} places recommended)\n`);
 
-  // ─── SAVE RESULTS ───────────────────────────────────────
+  // SAVE RESULTS
   const results = {
     timestamp:   new Date().toISOString(),
     testSize:    testSet.length,

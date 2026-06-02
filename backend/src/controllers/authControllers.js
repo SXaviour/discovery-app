@@ -124,13 +124,11 @@ async function login(req, res) {
     // 5. Record the login time
     await updateUserLastLogin(user.id);
 
-    // 6. Store the user's ID in their session
-    //    req.session is provided by express-session middleware
-    //    This session is stored server-side; the client only gets a cookie with a session ID
+    // 6. Store the user's ID in their session so we know they're logged in on future requests
     req.session.userId = user.id;
     req.session.cookie.maxAge = rememberMe
       ? 1000 * 60 * 60 * 24 * 30  // 30 days
-      : null;                       // session cookie — expires when browser closes
+      : null;                       
 
     res.json({
       success: true,

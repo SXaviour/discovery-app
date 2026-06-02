@@ -202,7 +202,10 @@
     "608": 199,
     "609": 200,
     "613": 201,
-    "616": 202
+    "616": 202,
+    "622": 203,
+    "623": 204,
+    "624": 205
   },
   "placeMap": {
     "1": 0,
@@ -908,7 +911,7 @@
     "water_based": 15,
     "wellness_recovery": 16
   },
-  "numUsers": 203,
+  "numUsers": 206,
   "numPlaces": 676,
   "numCategories": 5,
   "numSubcategories": 17

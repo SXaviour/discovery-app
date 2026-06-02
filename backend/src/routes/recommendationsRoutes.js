@@ -1,5 +1,5 @@
 // Routes for the recommendation system
-// All endpoints require the user to be logged in
+// All routes require the user to be logged in
 
 const express = require('express');
 const router = express.Router();
